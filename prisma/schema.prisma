@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id              String    @id @default(uuid())
+  name            String
+  gstNumber       String
+  logo            String?
+  address         String
+  accountNumber   String
+  ifscCode        String
+  bankName        String
+  rulesAndPolicies String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  users           User[]
+  customers       Customer[]
+  invoices        Invoice[]
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Customer {
+  id             String    @id @default(uuid())
+  name           String
+  address        String
+  gstNumber      String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  invoices       Invoice[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Invoice {
+  id             String    @id @default(uuid())
+  invoiceNumber  String
+  customerId     String
+  customer       Customer  @relation(fields: [customerId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  totalAmount    Float
+  gstAmount      Float
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  items          InvoiceItem[]
+  payments       Payment[]
+}
+
+model InvoiceItem {
+  id         String  @id @default(uuid())
+  invoiceId  String
+  invoice    Invoice @relation(fields: [invoiceId], references: [id])
+  productName String
+  hsnCode    String
+  quantity   Float
+  price      Float
+  unit       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Payment {
+  id         String  @id @default(uuid())
+  invoiceId  String
+  invoice    Invoice @relation(fields: [invoiceId], references: [id])
+  amount     Float
+  paymentDate DateTime
+  paymentMethod String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
