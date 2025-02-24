@@ -1,91 +1,48 @@
-import { NextResponse } from "next/server"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import prisma from "@/lib/prisma"
+import { NextResponse } from 'next/server'
+import prisma  from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const session = await supabase.auth.getUser()
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { customerId, organizationId, totalAmount, gstAmount, items } = await request.json()
+  const body = await request.json()
+  const { customerId, organizationId, items, totalAmount, gstAmount } = body
 
   try {
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+    })
+
+    if (!organization) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+    }
+
+    const invoiceNumber = `INV-${organization.invoiceCount + 1}`
+
     const invoice = await prisma.invoice.create({
       data: {
+        invoiceNumber,
         customerId,
         organizationId,
+        items,
         totalAmount,
         gstAmount,
-        invoiceNumber: await generateInvoiceNumber(organizationId),
-        items: {
-          create: items,
-        },
+        status: 'PENDING',
       },
-      include: {
-        items: true,
-        customer: true,
-      },
+    })
+
+    await prisma.organization.update({
+      where: { id: organizationId },
+      data: { invoiceCount: { increment: 1 } },
     })
 
     return NextResponse.json(invoice)
   } catch (error) {
-    console.error("Error creating invoice:", error)
-    return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 })
+    console.error('Error creating invoice:', error)
+    return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 })
   }
 }
-
-export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { searchParams } = new URL(request.url)
-  const organizationId = searchParams.get("organizationId")
-
-  if (!organizationId) {
-    return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
-  }
-
-  try {
-    const invoices = await prisma.invoice.findMany({
-      where: {
-        organizationId,
-      },
-      include: {
-        customer: true,
-        items: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
-
-    return NextResponse.json(invoices)
-  } catch (error) {
-    console.error("Error fetching invoices:", error)
-    return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 })
-  }
-}
-
-async function generateInvoiceNumber(organizationId: string): Promise<string> {
-  const latestInvoice = await prisma.invoice.findFirst({
-    where: { organizationId },
-    orderBy: { createdAt: "desc" },
-  })
-
-  const lastNumber = latestInvoice ? Number.parseInt(latestInvoice.invoiceNumber.split("-")[1]) : 0
-
-  return `INV-${(lastNumber + 1).toString().padStart(6, "0")}`
-}
-
