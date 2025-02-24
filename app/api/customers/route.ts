@@ -1,31 +1,33 @@
 import { NextResponse } from "next/server"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
+import { createClient } from "@/utils/supabase/server"
 
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = await createClient()
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { name, address, gstNumber, organizationId } = await request.json()
-
+  const { name, address, gstNumber } = await request.json()
+  console.log("name, address, gstNumber: ", name, address, gstNumber)
+  if (!name || !address || !gstNumber) return NextResponse.json({ message: "Missing required fields" }, { status: 500 })
   try {
     const customer = await prisma.customer.create({
       data: {
         name,
         address,
-        gstNumber,
-        organizationId,
-      },
+        gstNumber: String(gstNumber).toUpperCase(),
+        userId: user.id,
+      }
     })
 
-    return NextResponse.json(customer)
+    return NextResponse.json({ customer, message: "Customer created successfully" }, {
+      status: 201
+    })
   } catch (error) {
     console.error("Error creating customer:", error)
     return NextResponse.json({ error: "Failed to create customer" }, { status: 500 })
@@ -33,33 +35,27 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = await createClient()
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-
-  const { searchParams } = new URL(request.url)
-  const organizationId = searchParams.get("organizationId")
-
-  if (!organizationId) {
-    return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
-  }
-
   try {
     const customers = await prisma.customer.findMany({
       where: {
-        organizationId,
+        userId: user.id,
       },
       orderBy: {
         name: "asc",
       },
     })
 
-    return NextResponse.json(customers)
+    return NextResponse.json({ message: "Customers fetched successfully", customers }, {
+      status: 200
+    })
   } catch (error) {
     console.error("Error fetching customers:", error)
     return NextResponse.json({ error: "Failed to fetch customers" }, { status: 500 })

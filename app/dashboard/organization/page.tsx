@@ -1,10 +1,10 @@
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import OrganizationForm from './_components/OrganizationForm'
+import { supabaseClient } from '@/utils/supabase'
 
 export default async function OrganizationPage() {
-    const session = await supabase.auth.getUser()
+    const session = await supabaseClient.auth.getUser()
 
     if (!session) {
         redirect('/auth/login')

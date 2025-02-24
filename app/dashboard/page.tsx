@@ -1,9 +1,6 @@
 import prisma  from '@/lib/prisma'
-import { redirect } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 
 export default async function Dashboard() {
-  const user = await supabase.auth.getUser()
 
   const recentInvoices = await prisma.invoice.findMany({
     take: 5,

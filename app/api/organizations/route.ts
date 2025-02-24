@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { supabase } from '@/lib/supabase'
+import { supabaseClient } from '@/utils/supabase'
 
 export async function POST(request: Request) {
-  const session = await supabase.auth.getUser()
+  const session = await supabaseClient.auth.getUser()
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const body = await request.json()
-  const { name, gstNumber, address, bankName, accountNumber, ifscCode,userId } = body
+  const { name, gstNumber, address, bankName, accountNumber, ifscCode, userId, logo } = body
 
   try {
     const organization = await prisma.organization.create({
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
         bankName,
         accountNumber,
         ifscCode,
+        logo: logo || ""
       },
     })
 

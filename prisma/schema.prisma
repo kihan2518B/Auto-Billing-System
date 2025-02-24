@@ -94,17 +94,18 @@ generator client {
 }
 
 model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  Organization   Organization[]
+  id           String         @id @default(uuid())
+  email        String         @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Organization Organization[]
+  customers     Customer[]
 }
 
 model Organization {
-  id            String     @id @default(uuid())
+  id            String    @id @default(uuid())
   name          String
-  gstNumber     String     @unique
+  gstNumber     String    @unique
   logo          String?
   address       String
   bankName      String
@@ -112,24 +113,23 @@ model Organization {
   ifscCode      String
   policy        String?
   userId        String
-  invoiceCount  Int        @default(0)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  invoiceCount  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   invoices      Invoice[]
-  customers     Customer[]
-  user          User       @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 }
 
 model Customer {
-  id             String       @id @default(uuid())
-  name           String
-  address        String
-  gstNumber      String
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  invoices       Invoice[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id        String    @id @default(uuid())
+  name      String
+  address   String
+  gstNumber String
+  invoices  Invoice[]
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Invoice {

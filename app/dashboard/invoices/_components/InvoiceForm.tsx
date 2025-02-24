@@ -2,13 +2,26 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
+import { User } from '@supabase/supabase-js'
+import axios from 'axios'
 
-export default function InvoiceForm() {
+const fetchCustomers = async () => {
+  const res = await axios.get("/api/invoices", { params: { getorgandcust: true } })
+  return res.data
+}
+
+export default function InvoiceForm({ user }: { user: User }) {
   const [customerId, setCustomerId] = useState('')
   const [organizationId, setOrganizationId] = useState('')
   const [items, setItems] = useState([{ name: '', hsnCode: '', quantity: 0, price: 0, unit: '' }])
   const router = useRouter()
 
+  const { data, isLoading } = useQuery({
+    queryKey: ["customers and organizations"],
+    queryFn: () => fetchCustomers(),
+    enabled: !!user
+  })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -64,6 +77,12 @@ export default function InvoiceForm() {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
         >
           <option value="">Select a customer</option>
+          {isLoading && <option>Loading Customers...</option>}
+          {data && data.customers.map((customer: any) => (
+            <option key={customer.id} value={customer.id}>
+              {customer.name}
+            </option>
+          ))}
           {/* Add customer options here */}
         </select>
       </div>
@@ -79,7 +98,12 @@ export default function InvoiceForm() {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
         >
           <option value="">Select an organization</option>
-          {/* Add organization options here */}
+          {isLoading && <option>Loading Organizations...</option>}
+          {data && data.organizations.map((org: any) => (
+            <option key={org.id} value={org.id}>
+              {org.name}
+            </option>
+          ))}
         </select>
       </div>
       <div className="mb-4">
