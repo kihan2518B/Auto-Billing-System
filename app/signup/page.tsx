@@ -15,6 +15,7 @@ export default function Signup() {
       <form className="w-full max-w-xs">
         <input
           type="email"
+          name="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -24,6 +25,7 @@ export default function Signup() {
           type="password"
           placeholder="Password"
           value={password}
+          name="password"
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-2 mb-4 border rounded"
         />

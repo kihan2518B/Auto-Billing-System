@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import InvoiceForm from './_components/InvoiceForm'
 import { createClient } from '@/utils/supabase/server'
 import InvoicesList from './_components/InvoicesList'
+import DownloadInvoice from './_components/DownloadInvoice'
 
 export default async function InvoicesPage() {
     const supabase = await createClient()
@@ -18,6 +19,7 @@ export default async function InvoicesPage() {
             <h1 className="text-3xl font-bold mb-6">Invoices</h1>
             <InvoiceForm user={data.user} />
             <InvoicesList user={data.user} />
+            <DownloadInvoice />
         </div>
     )
 }

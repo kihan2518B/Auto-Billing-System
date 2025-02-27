@@ -134,14 +134,16 @@ model Customer {
 
 model Invoice {
   id             String       @id @default(uuid())
-  invoiceNumber  String       @unique
+  invoiceNumber  String      
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   customerId     String
   customer       Customer     @relation(fields: [customerId], references: [id])
   items          Json
   totalAmount    Float
+  vehicalNumber  String
   gstAmount      Float
+  grandTotal     Float
   status         String       @default("PENDING")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

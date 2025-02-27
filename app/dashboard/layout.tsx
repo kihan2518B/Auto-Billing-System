@@ -1,6 +1,6 @@
 import type React from "react"
-import CustomAdminSideBar from "@/components/DashbardSidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
+import CustomAdminSideBar from "@/components/CustomAdminSidebar"
 
 export default function DashboardLayout({
     children,

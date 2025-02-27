@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
+import prisma from '@/lib/prisma'
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
@@ -29,18 +30,24 @@ export async function signup(formData: FormData) {
 
     // type-casting here for convenience
     // in practice, you should validate your inputs
-    const data = {
+    const userData = {
         email: formData.get('email') as string,
         password: formData.get('password') as string,
-        options:{
+        options: {
             data: {
                 role: formData.get('role') || "admin",
             },
         }
     }
 
-    const { error } = await supabase.auth.signUp(data)
+    const { error, data } = await supabase.auth.signUp(userData)
     console.log("data: ", data);
+    await prisma.user.create({
+        data: {
+            email: userData.email,
+            id: data.user?.id,
+        }
+    })
 
     if (error) {
         console.log("error: ", error);
