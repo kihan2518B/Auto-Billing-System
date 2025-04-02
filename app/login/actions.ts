@@ -6,58 +6,81 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import prisma from '@/lib/prisma'
 
-export async function login(formData: FormData) {
+export async function login(formData: FormData): Promise<{
+    success: boolean;
+    message: string;
+    data?: any;
+}> {
     const supabase = await createClient()
 
-    // type-casting here for convenience
-    // in practice, you should validate your inputs
     const userData = {
         email: formData.get('email') as string,
         password: formData.get('password') as string,
     }
+
     const { error, data } = await supabase.auth.signInWithPassword(userData)
+
     if (error) {
-        console.log("error: ", error.message);
-        redirect('/error')
+        return {
+            success: false,
+            message: error.message || 'Invalid email or password',
+        }
     }
 
     revalidatePath('/', 'layout')
-    redirect('/dashboard')
+    return {
+        success: true,
+        message: 'Login successful',
+        data,
+    }
 }
 
-export async function signup(formData: FormData) {
+export async function signup(formData: FormData): Promise<{
+    success: boolean;
+    message: string;
+    data?: any;
+}> {
     const supabase = await createClient()
 
-    // type-casting here for convenience
-    // in practice, you should validate your inputs
     const userData = {
         email: formData.get('email') as string,
         password: formData.get('password') as string,
-        options: {
-            data: {
-                role: formData.get('role') || "admin",
-            },
-        }
     }
 
     const { error, data } = await supabase.auth.signUp(userData)
-    console.log("data: ", data);
-    await prisma.user.create({
-        data: {
-            email: userData.email,
-            id: data.user?.id,
-        }
-    })
 
     if (error) {
-        console.log("error: ", error);
-        redirect('/error')
+        return {
+            success: false,
+            message: error.message || 'Signup failed',
+        }
     }
 
-    revalidatePath('/', 'layout')
-    redirect('/')
+    try {
+        await prisma.user.create({
+            data: {
+                email: userData.email,
+                id: data.user?.id as string,
+            },
+        })
+    } catch (prismaError) {
+        console.error("Prisma error:", prismaError)
+        return {
+            success: false,
+            message: 'Failed to create user record in database',
+        }
+    }
+
+    return {
+        success: true,
+        message: 'Signup successful! Please check your email to verify.',
+        data,
+    }
 }
+
 export async function signOut() {
     const supabase = await createClient()
     const { error } = await supabase.auth.signOut()
+    console.log("Signed out");
+
 }

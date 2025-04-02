@@ -99,7 +99,7 @@ model User {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   Organization Organization[]
-  customers     Customer[]
+  customers    Customer[]
 }
 
 model Organization {
@@ -133,29 +133,32 @@ model Customer {
 }
 
 model Invoice {
-  id             String       @id @default(uuid())
-  invoiceNumber  String      
+  id             String        @id @default(uuid())
+  invoiceNumber  String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  customerId     String
-  customer       Customer     @relation(fields: [customerId], references: [id])
+  customerId     String?
+  customer       Customer?     @relation(fields: [customerId], references: [id])
+  billerName     String?
+  invoiceType    String //Credit or Debit
   items          Json
   totalAmount    Float
   vehicalNumber  String
   gstAmount      Float
   grandTotal     Float
-  status         String       @default("PENDING")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  status         String        @default("PENDING")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   payments       Payment[]
 }
 
 model Payment {
-  id          String   @id @default(uuid())
-  invoiceId   String
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
-  amount      Float
-  paymentDate DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  amount        Float
+  paymentDate   DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  creditBillsId String?
 }

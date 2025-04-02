@@ -13,6 +13,13 @@ const config: Config = {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+			  navy: {
+				500: '#1E3A8A', // Primary button focus
+				600: '#1E40AF', // Primary button
+				700: '#1E3A8A', // Primary button hover
+				800: '#1E2A78', // Headings
+				900: '#172554', // Text
+			  },
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'

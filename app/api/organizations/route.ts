@@ -11,6 +11,7 @@ export async function POST(request: Request) {
 
   const body = await request.json()
   const { name, gstNumber, address, bankName, accountNumber, ifscCode, userId, logo } = body
+  console.log("body: ", body);
 
   try {
     const organization = await prisma.organization.create({
