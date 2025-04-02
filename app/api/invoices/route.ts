@@ -40,6 +40,7 @@ export async function POST(request: Request) {
 
     const invoice = await prisma.invoice.create({
       data: {
+        userId: data.user.id,
         invoiceNumber,
         customerId,
         organizationId,
@@ -104,6 +105,7 @@ export async function GET(request: Request) {
     }
 
     const invoices = await prisma.invoice.findMany({
+      where: { userId: data.user?.id },
       include: { customer: true, organization: true },
       orderBy: { createdAt: 'desc' },
     })

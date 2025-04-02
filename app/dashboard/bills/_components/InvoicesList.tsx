@@ -2,6 +2,7 @@
 import { User } from '@supabase/supabase-js'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import Link from 'next/link'
 import React from 'react'
 
 async function GetInvoices() {
@@ -33,7 +34,11 @@ export default function InvoicesList({ user }: { user: User }) {
                         <tr key={invoice.id} className="border-t">
                             <td className="px-4 py-2">{invoice.invoiceNumber}</td>
                             <td className="px-4 py-2">{invoice.customer.name}</td>
-                            <td className="px-4 py-2">{invoice.organization.name}</td>
+                            <td className="px-4 py-2">
+                                <Link href={`/dashboard/bills/${invoice.id}`}>
+                                    {invoice.organization.name}
+                                </Link>
+                            </td>
                             <td className="px-4 py-2">${invoice.totalAmount.toFixed(2)}</td>
                             <td className="px-4 py-2">{invoice.status}</td>
                         </tr>

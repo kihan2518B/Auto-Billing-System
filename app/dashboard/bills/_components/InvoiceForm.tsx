@@ -1,39 +1,46 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { User } from '@supabase/supabase-js'
-import axios from 'axios'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { User } from '@supabase/supabase-js';
+import axios from 'axios';
+import { Plus, Trash2, ChevronDown, Save, Truck } from 'lucide-react';
+import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/use-toast';
 
 const fetchCustomers = async () => {
-  const res = await axios.get("/api/invoices", { params: { getorgandcust: true } })
-  console.log("res.data: ", res.data);
-
-  return res.data
-}
+  const res = await axios.get('/api/invoices', { params: { getorgandcust: true } });
+  return res.data;
+};
 
 export default function InvoiceForm({ user }: { user: User }) {
-  const [customerId, setCustomerId] = useState('')
-  const [organizationId, setOrganizationId] = useState('')
-  const [vehicalNumber, setVehicalNumber] = useState('')
-  const [invoiceType, setInvoiceType] = useState<"DEBIT" | "CREDIT">('DEBIT')
-  const [items, setItems] = useState([{ name: '', hsnCode: '', quantity: 0, price: 0, unit: '', amount: 0 }])
+  const [customerId, setCustomerId] = useState('');
+  const [organizationId, setOrganizationId] = useState('');
+  const [vehicalNumber, setVehicleNumber] = useState('');
+  const [invoiceType, setInvoiceType] = useState<'DEBIT' | 'CREDIT'>('DEBIT');
+  const [items, setItems] = useState([
+    { name: '', hsnCode: '', quantity: 0, price: 0, unit: '', amount: 0 },
+  ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isItemsExpanded, setIsItemsExpanded] = useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["customers and organizations"],
+    queryKey: ['customers and organizations'],
     queryFn: fetchCustomers,
-    enabled: !!user
-  })
+    enabled: !!user,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    setIsSubmitting(true);
     try {
-      const totalAmount = Number(items.reduce((sum, item) => sum + item.amount, 0).toFixed(0))
+      const totalAmount = Number(items.reduce((sum, item) => sum + item.amount, 0).toFixed(0));
+      const gstAmount = Number((totalAmount * 0.18).toFixed(0)); // 18% GST
+      const grandTotal = Number((totalAmount + gstAmount).toFixed(0));
 
-      const gstAmount = Number((totalAmount * 0.18).toFixed(0)) // Assuming 18% GST
-      const grandTotal = Number((totalAmount + gstAmount).toFixed(0))
-      console.log("totalAmount,gstAmount,grandTotal: ", totalAmount, gstAmount, grandTotal);
       const response = await fetch('/api/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,178 +52,330 @@ export default function InvoiceForm({ user }: { user: User }) {
           gstAmount,
           grandTotal,
           vehicalNumber,
-          invoiceType
+          invoiceType,
         }),
-      })
+      });
 
-      if (!response.ok) throw new Error('Failed to create invoice')
-      // router.refresh()
+      if (!response.ok) throw new Error('Failed to create invoice');
+
+      // Show success toast
+      toast({
+        title: "Success!",
+        description: `Invoice created successfully with total amount ₹${grandTotal.toFixed(2)}`,
+        variant: "default",
+        className: "bg-green-50 border border-green-200 text-green-800",
+      });
+
+      router.refresh();
       // Reset form
-      // setCustomerId('')
-      // setOrganizationId('')
-      // setVehicalNumber('')
-      // setItems([{ name: '', hsnCode: '', quantity: 0, price: 0, unit: '', amount: 0 }])
+      setCustomerId('');
+      setOrganizationId('');
+      setVehicleNumber('');
+      setItems([{ name: '', hsnCode: '', quantity: 0, price: 0, unit: '', amount: 0 }]);
     } catch (error) {
-      console.error('Error creating invoice:', error)
+      console.error('Error creating invoice:', error);
+
+      // Show error toast
+      toast({
+        title: "Error!",
+        description: "Failed to create invoice. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const addItem = () => {
-    setItems([...items, { name: '', hsnCode: '', quantity: 0, price: 0, unit: '', amount: 0 }])
-  }
+    setItems([...items, { name: '', hsnCode: '', quantity: 0, price: 0, unit: '', amount: 0 }]);
+
+    // Show notification when item is added
+    toast({
+      description: "New item added to invoice",
+      className: "bg-primary text-white",
+    });
+  };
+
+  const removeItem = (index: number) => {
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+
+      // Show notification when item is removed
+      toast({
+        description: "Item removed from invoice",
+        variant: "default",
+        className: "bg-accent-red text-white",
+      });
+    }
+  };
 
   const updateItem = (index: number, field: string, value: string | number) => {
-    const newItems = [...items]
-    newItems[index] = { ...newItems[index], [field]: value }
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
 
-    // Update amount dynamically based on quantity * price
     if (field === 'quantity' || field === 'price') {
-      const quantity = parseFloat(newItems[index].quantity.toString()) || 0
-      const price = parseFloat(newItems[index].price.toString()) || 0
-      newItems[index].amount = Number((quantity * price).toFixed(0))
+      const quantity = parseFloat(newItems[index].quantity.toString()) || 0;
+      const price = parseFloat(newItems[index].price.toString()) || 0;
+      newItems[index].amount = Number((quantity * price).toFixed(0));
     }
 
-    setItems(newItems)
-  }
+    setItems(newItems);
+  };
+
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  const gstAmount = totalAmount * 0.18;
+  const grandTotal = totalAmount + gstAmount;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-2xl font-semibold mb-4">Create New Invoice</h2>
+    <div className="w-full mx-auto p-3 sm:p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-neutral-white p-4 sm:p-6 rounded-lg shadow-md space-y-5"
+      >
+        <h2 className="text-xl sm:text-2xl font-semibold text-neutral-heading mb-3">Create New Invoice</h2>
 
-      {/* Customer Dropdown */}
-      <div className="mb-4">
-        <label htmlFor="customerId" className="block text-sm font-medium text-gray-700">
-          Customer
-        </label>
-        <select
-          id="customerId"
-          value={customerId}
-          onChange={(e) => setCustomerId(e.target.value)}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >
-          <option value="">Select a customer</option>
-          {isLoading ? <option>Loading Customers...</option> : data?.customers.map((customer: any) => (
-            <option key={customer.id} value={customer.id}>
-              {customer.name}
-            </option>
-          ))}
-        </select>
-      </div>
+        {/* Customer & Organization Selection */}
+        <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+          <div className="relative">
+            <label htmlFor="customerId" className="block text-sm font-medium text-neutral-text mb-1">
+              Customer
+            </label>
+            <div className="relative">
+              <select
+                id="customerId"
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full p-3 rounded-md border border-neutral-border text-neutral-text bg-neutral-white focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none disabled:bg-neutral-disabled appearance-none"
+              >
+                <option value="">Select a customer</option>
+                {isLoading ? (
+                  <option>Loading...</option>
+                ) : (
+                  data?.customers.map((customer: any) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-neutral-text pointer-events-none" />
+            </div>
+          </div>
 
-      {/* Organization Dropdown */}
-      <div className="mb-4">
-        <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700">
-          Organization
-        </label>
-        <select
-          id="organizationId"
-          value={organizationId}
-          onChange={(e) => setOrganizationId(e.target.value)}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        >
-          <option value="">Select an organization</option>
-          {isLoading ? <option>Loading Organizations...</option> : data?.organizations.map((org: any) => (
-            <option key={org.id} value={org.id}>
-              {org.name}
-            </option>
-          ))}
-        </select>
+          <div className="relative">
+            <label htmlFor="organizationId" className="block text-sm font-medium text-neutral-text mb-1">
+              Organization
+            </label>
+            <div className="relative">
+              <select
+                id="organizationId"
+                value={organizationId}
+                onChange={(e) => setOrganizationId(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full p-3 rounded-md border border-neutral-border text-neutral-text bg-neutral-white focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none disabled:bg-neutral-disabled appearance-none"
+              >
+                <option value="">Select an organization</option>
+                {isLoading ? (
+                  <option>Loading...</option>
+                ) : (
+                  data?.organizations.map((org: any) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-neutral-text pointer-events-none" />
+            </div>
+          </div>
+        </div>
 
-        <div className="mb-4">
-          <label htmlFor="organizationId" className="block text-sm font-medium text-gray-700">
-            Invoice Type
-          </label>
-          <select
-            id="invoiceType"
-            value={invoiceType}
-            onChange={(e) => setInvoiceType(e.target.value as "DEBIT" | "CREDIT")}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          >
-            <option value="">What type of bill you want to generate</option>
-            {[{ value: "DEBIT", name: "DEBIT" }, { name: "CREDIT", value: "CREDIT" }].map((opt: any) => (
-              <option key={opt.name} value={opt.value}>
-                {opt.name}
-              </option>
-            ))}
-          </select>
+        {/* Invoice Type & Vehicle Number */}
+        <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+          <div className="relative">
+            <label htmlFor="invoiceType" className="block text-sm font-medium text-neutral-text mb-1">
+              Invoice Type
+            </label>
+            <div className="relative">
+              <select
+                id="invoiceType"
+                value={invoiceType}
+                onChange={(e) => setInvoiceType(e.target.value as 'DEBIT' | 'CREDIT')}
+                required
+                className="w-full p-3 rounded-md border border-neutral-border text-neutral-text bg-neutral-white focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none appearance-none"
+              >
+                <option value="DEBIT">DEBIT</option>
+                <option value="CREDIT">CREDIT</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-neutral-text pointer-events-none" />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="vehicalNumber" className="block text-sm font-medium text-neutral-text mb-1">
+              Vehicle Number
+            </label>
+            <div className="relative">
+              <input
+                id="vehicalNumber"
+                type="text"
+                value={vehicalNumber}
+                onChange={(e) => setVehicleNumber(e.target.value)}
+                placeholder="Enter vehicle number"
+                className="w-full p-3 pl-9 rounded-md border border-neutral-border text-neutral-text focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none"
+              />
+              <Truck className="absolute left-3 top-3 w-5 h-5 text-neutral-text" />
+            </div>
+          </div>
         </div>
 
         {/* Invoice Items */}
-        <div className="mb-4">
-          <h3 className="text-lg font-medium mb-2">Invoice Items</h3>
-          {items.map((item, index) => (
-            <div key={index} className="grid grid-cols-6 gap-2 mb-2">
-              <input
-                type="text"
-                placeholder="Product Name"
-                value={item.name}
-                onChange={(e) => updateItem(index, 'name', e.target.value)}
-                className="rounded-md border-gray-300 shadow-sm"
-              />
-              <input
-                type="text"
-                placeholder="HSN Code"
-                value={item.hsnCode}
-                onChange={(e) => updateItem(index, 'hsnCode', e.target.value)}
-                className="rounded-md border-gray-300 shadow-sm"
-              />
-              <input
-                type="number"
-                placeholder="Quantity"
-                value={item.quantity}
-                onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
-                className="rounded-md border-gray-300 shadow-sm"
-              />
-              <input
-                type="number"
-                placeholder="Price"
-                value={item.price}
-                onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value))}
-                className="rounded-md border-gray-300 shadow-sm"
-              />
-              <input
-                type="text"
-                placeholder="Unit"
-                value={item.unit}
-                onChange={(e) => updateItem(index, 'unit', e.target.value)}
-                className="rounded-md border-gray-300 shadow-sm"
-              />
-              <input
-                type="text"
-                placeholder="Amount"
-                value={item.amount.toFixed(2)}
-                disabled
-                className="rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed"
-              />
-              <input
-                type="text"
-                onChange={(e) => setVehicalNumber(e.target.value)}
-                placeholder="Vehical Number"
-                value={vehicalNumber}
-                className="rounded-md border-gray-300 shadow-sm bg-gray-100 "
-              />
-            </div>
-          ))}
+        <div className="mt-6 bg-neutral-light rounded-lg overflow-hidden">
           <button
             type="button"
-            onClick={addItem}
-            className="mt-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200"
+            onClick={() => setIsItemsExpanded(!isItemsExpanded)}
+            className="w-full flex items-center justify-between p-4 text-left text-neutral-heading font-medium bg-neutral-light hover:bg-gray-100 transition-colors"
           >
-            Add Item
+            <span className="flex items-center gap-2">
+              <span className="w-6 h-6 flex items-center justify-center bg-primary text-white rounded-full text-xs">
+                {items.length}
+              </span>
+              Invoice Items
+            </span>
+            <ChevronDown className={`w-5 h-5 transition-transform ${isItemsExpanded ? 'rotate-180' : ''}`} />
           </button>
+
+          {isItemsExpanded && (
+            <div className="p-3">
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={index} className="bg-white p-3 rounded-md shadow-sm border border-neutral-border">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium text-neutral-heading">Item #{index + 1}</span>
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          className="p-1 text-accent-red hover:text-accent-red-hover transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div>
+                        <label className="block text-xs text-neutral-text mb-1">Product Name</label>
+                        <input
+                          type="text"
+                          placeholder="Product Name"
+                          value={item.name}
+                          onChange={(e) => updateItem(index, 'name', e.target.value)}
+                          className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-neutral-text mb-1">HSN Code</label>
+                        <input
+                          type="text"
+                          placeholder="HSN Code"
+                          value={item.hsnCode}
+                          onChange={(e) => updateItem(index, 'hsnCode', e.target.value)}
+                          className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-neutral-text mb-1">Quantity</label>
+                        <input
+                          type="number"
+                          placeholder="Qty"
+                          value={item.quantity || ''}
+                          onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                          className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-neutral-text mb-1">Price</label>
+                        <input
+                          type="number"
+                          placeholder="Price"
+                          value={item.price || ''}
+                          onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                          className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-neutral-text mb-1">Unit</label>
+                        <input
+                          type="text"
+                          placeholder="Unit"
+                          value={item.unit}
+                          onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                          className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      <label className="block text-xs text-neutral-text mb-1">Amount</label>
+                      <input
+                        type="text"
+                        value={`₹${item.amount.toFixed(2)}`}
+                        disabled
+                        className="w-full p-2 rounded-md border border-neutral-border bg-neutral-light text-neutral-heading font-medium cursor-not-allowed text-sm"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addItem}
+                className="mt-3 flex items-center justify-center w-full gap-2 px-4 py-3 text-sm font-medium text-primary bg-white border border-primary rounded-md hover:bg-primary hover:text-white transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add New Item
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Totals */}
+        <div className="mt-6 bg-neutral-light p-4 rounded-lg">
+          <div className="flex justify-between text-neutral-text mb-2">
+            <span>Subtotal:</span>
+            <span>₹{totalAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-neutral-text mb-2">
+            <span>GST (18%):</span>
+            <span>₹{gstAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-lg font-semibold text-neutral-heading pt-2 border-t border-neutral-border">
+            <span>Grand Total:</span>
+            <span>₹{grandTotal.toFixed(2)}</span>
+          </div>
         </div>
 
         {/* Submit Button */}
-        <button
-          type="submit"
-          className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-        >
-          Create Invoice
-        </button>
-      </div>
-    </form>
-  )
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={isSubmitting || isLoading}
+            className="w-full px-6 py-3 text-neutral-white bg-primary rounded-md hover:bg-primary-hover disabled:bg-primary-disabled transition-colors flex items-center justify-center gap-2 font-medium"
+          >
+            <Save className="w-5 h-5" />
+            {isSubmitting ? 'Creating Invoice...' : 'Create Invoice'}
+          </button>
+        </div>
+      </form>
+
+      {/* Toast component */}
+      <Toaster />
+    </div>
+  );
 }

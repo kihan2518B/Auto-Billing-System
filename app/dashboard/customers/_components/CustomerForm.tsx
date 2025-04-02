@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User } from "@supabase/supabase-js";
 import axios from "axios";
-import { toast } from "@/components/ui/use-toast";
-import { Toaster } from "@/components/ui/toaster";
+import toast from "react-hot-toast";
+
 
 interface CustomerFormProps {
   user: User;
@@ -39,11 +39,7 @@ export default function CustomerForm({ user }: CustomerFormProps) {
       });
 
       if (res.status === 201) {
-        toast({
-          title: "Customer Added",
-          description: "New organization created successfully.",
-          className: "bg-green-100 border-green-500 text-green-700",
-        });
+        toast.success("Customer added successfully");
 
         // Reset form
         setName("");
@@ -51,15 +47,11 @@ export default function CustomerForm({ user }: CustomerFormProps) {
         setAddress("");
         setIsDialogOpen(false);
       } else {
-        throw new Error("Failed to create organization");
+        throw new Error("Failed to create Customer");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create organization. Please try again.",
-        className: "bg-red-100 border-red-500 text-red-700",
-      });
-      console.error("Error creating organization:", error);
+      toast.error("Failed to create Customer. Please try again.");
+      console.error("Error creating Customer:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,10 +67,11 @@ export default function CustomerForm({ user }: CustomerFormProps) {
               hover:bg-navy-700 
               focus:border-navy-500 
               focus:ring-2 
+              text-white
               focus:ring-navy-500 
               focus:ring-opacity-50"
           >
-            Add New Organization
+            Add New Customer
           </Button>
         </DialogTrigger>
         <DialogContent
@@ -92,7 +85,7 @@ export default function CustomerForm({ user }: CustomerFormProps) {
                 text-xl 
                 font-bold"
             >
-              Add New Organization
+              Add New Customer
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -166,6 +159,7 @@ export default function CustomerForm({ user }: CustomerFormProps) {
                 hover:bg-navy-700 
                 focus:border-navy-500 
                 focus:ring-2 
+                text-white
                 focus:ring-navy-500 
                 focus:ring-opacity-50"
               disabled={isSubmitting}
@@ -175,7 +169,6 @@ export default function CustomerForm({ user }: CustomerFormProps) {
           </form>
         </DialogContent>
       </Dialog>
-      <Toaster />
     </>
   );
 }
