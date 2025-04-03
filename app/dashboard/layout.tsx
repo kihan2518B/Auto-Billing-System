@@ -15,7 +15,7 @@ export default function DashboardLayout({
     return (
         <div className="w-full">
             <SidebarProvider>
-                <SidebarTrigger className="max-[768px]:hidden" />
+                <SidebarTrigger className="" />
                 <CustomAdminSideBar />
                 <SessionContextProvider supabaseClient={supabase}>
                     {children}
