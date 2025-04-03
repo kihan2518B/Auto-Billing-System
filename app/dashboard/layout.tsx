@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import CustomAdminSideBar from "@/components/CustomAdminSidebar"
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
@@ -15,6 +15,7 @@ export default function DashboardLayout({
     return (
         <div className="w-full">
             <SidebarProvider>
+                <SidebarTrigger className="max-[768px]:hidden" />
                 <CustomAdminSideBar />
                 <SessionContextProvider supabaseClient={supabase}>
                     {children}
