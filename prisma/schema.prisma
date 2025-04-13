@@ -152,14 +152,15 @@ model Invoice {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   User           User         @relation(fields: [userId], references: [id])
-  payments       Payment[]
+  payments       PaymentLog[]
 }
 
-model Payment {
+model PaymentLog {
   id            String   @id @default(uuid())
   invoiceId     String
   invoice       Invoice  @relation(fields: [invoiceId], references: [id])
-  amount        Float
+  amount        String
+  note          String?
   paymentDate   DateTime
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

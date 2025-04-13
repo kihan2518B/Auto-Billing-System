@@ -8,7 +8,7 @@ export default async function CustomersPage() {
     const { data } = await supabase.auth.getUser()
 
     if (!data) {
-        redirect('/auth/login')
+        redirect('/login')
     }
     return (
         <div className="p-6">

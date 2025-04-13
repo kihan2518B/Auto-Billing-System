@@ -27,6 +27,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Invoice } from "@prisma/client";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -51,7 +54,11 @@ export default async function Page({ params }: { params: { orgId: string } }) {
   const org = await prisma.organization.findUnique({
     where: { id: orgId },
     include: {
-      invoices: true,
+      invoices: {
+        include: {
+          customer: true,
+        },
+      },
     },
   });
 
@@ -105,7 +112,9 @@ export default async function Page({ params }: { params: { orgId: string } }) {
     totalInvoices,
     uniqueCustomerCount: uniqueCustomers.length,
   };
-
+  const viewInvoice = (id: string) => {
+    redirect(`/dashboard/bills/${id}`);
+  };
   return (
     <div className="min-h-screen w-full bg-gray-100">
       <div className="container mx-auto px-4 py-6">
@@ -376,6 +385,7 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                   <TableRow>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
                     <TableHead>Vehicle</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead>Status</TableHead>
@@ -385,7 +395,7 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                 <TableBody>
                   {org.invoices
                     .filter((I) => I.invoiceType == "DEBIT")
-                    .map((invoice) => (
+                    .map((invoice: Invoice) => (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">
                           {invoice.invoiceNumber}
@@ -396,6 +406,7 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                             {daysAgo(invoice.createdAt)} days ago
                           </div>
                         </TableCell>
+                        <TableCell>{invoice?.customer.name}</TableCell>
                         <TableCell>{invoice.vehicalNumber ?? "-"}</TableCell>
                         <TableCell className="text-right">
                           ₹
@@ -418,8 +429,12 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                             size="sm"
                             className="h-8 w-8 p-0"
                           >
-                            <span className="sr-only">View invoice</span>
-                            <ArrowUpRight size={14} />
+                            <Link
+                              href={`/dashboard/bills/${invoice.id}`}
+                              className=""
+                            >
+                              View
+                            </Link>
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -436,6 +451,7 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                   <TableRow>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
                     <TableHead>Vehicle</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead>Status</TableHead>
@@ -456,6 +472,7 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                             {daysAgo(invoice.createdAt)} days ago
                           </div>
                         </TableCell>
+                        <TableCell>{invoice?.customer.name}</TableCell>
                         <TableCell>{invoice.vehicalNumber ?? "-"}</TableCell>
                         <TableCell className="text-right">
                           ₹
@@ -478,8 +495,12 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                             size="sm"
                             className="h-8 w-8 p-0"
                           >
-                            <span className="sr-only">View invoice</span>
-                            <ArrowUpRight size={14} />
+                            <Link
+                              href={`/dashboard/bills/${invoice.id}`}
+                              className=""
+                            >
+                              View
+                            </Link>
                           </Button>
                         </TableCell>
                       </TableRow>

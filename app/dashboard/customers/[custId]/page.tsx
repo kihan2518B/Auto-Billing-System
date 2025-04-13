@@ -9,7 +9,6 @@ import {
   Calendar,
   Menu,
   Download,
-  ArrowUpRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,6 +34,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { AnalyticsCards, CustomerHeader } from "./helper";
+import Link from "next/link";
 
 // Utility Functions
 const formatDate = (dateString: string) => {
@@ -254,7 +254,7 @@ export default function CustomerDetailsPage() {
 
   const invoices = customer.invoices as Invoice[];
   const pendingInvoices = invoices.filter((inv) => inv.status === "PENDING");
-  const paidInvoices = invoices.filter((inv) => inv.status === "PAID");
+  const paidInvoices = invoices.filter((inv) => inv.status === "COMPLETED");
 
   const analytics = {
     totalBilled: invoices
@@ -379,7 +379,12 @@ export default function CustomerDetailsPage() {
                                 className="h-8 w-8 p-0"
                               >
                                 <span className="sr-only">View invoice</span>
-                                <ArrowUpRight size={14} />
+                                <Link
+                                  href={`/dashboard/bills/${invoice.id}`}
+                                  className=""
+                                >
+                                  View
+                                </Link>
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -470,7 +475,12 @@ export default function CustomerDetailsPage() {
                                 className="h-8 w-8 p-0"
                               >
                                 <span className="sr-only">View invoice</span>
-                                <ArrowUpRight size={14} />
+                                <Link
+                                  href={`/dashboard/bills/${invoice.id}`}
+                                  className=""
+                                >
+                                  View
+                                </Link>
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -585,7 +595,12 @@ export default function CustomerDetailsPage() {
                               className="h-8 w-8 p-0"
                             >
                               <span className="sr-only">View invoice</span>
-                              <ArrowUpRight size={14} />
+                              <Link
+                                href={`/dashboard/bills/${invoice.id}`}
+                                className=""
+                              >
+                                View
+                              </Link>
                             </Button>
                           </TableCell>
                         </TableRow>
