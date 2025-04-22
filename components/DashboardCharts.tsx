@@ -6,8 +6,8 @@ import {
   Bar,
   PieChart,
   Pie,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,8 +15,6 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
-  AreaChart,
-  Area,
 } from "recharts";
 
 interface DashboardChartsProps {
@@ -30,8 +28,8 @@ const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 shadow-lg rounded-lg border border-gray-200">
-        <p className="font-semibold text-gray-800">{label}</p>
+      <div className="bg-neutral-white p-4 shadow-lg rounded-lg border border-neutral-border">
+        <p className="font-semibold text-neutral-heading">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={`tooltip-${index}`} style={{ color: entry.color }}>
             {entry.name}:{" "}
@@ -77,8 +75,8 @@ export default function DashboardCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       {/* Bar Chart: Pending Invoices */}
-      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="bg-neutral-white p-4 sm:p-6 rounded-lg shadow-md border border-neutral-border">
+        <h2 className="text-xl font-semibold text-neutral-heading mb-4">
           Pending Invoices
         </h2>
         <div className="h-64 md:h-80">
@@ -121,8 +119,8 @@ export default function DashboardCharts({
       </div>
 
       {/* Pie Chart: Revenue Distribution */}
-      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="bg-neutral-white p-4 sm:p-6 rounded-lg shadow-md border border-neutral-border">
+        <h2 className="text-xl font-semibold text-neutral-heading mb-4">
           Revenue Distribution
         </h2>
         <div className="h-64 md:h-80">
@@ -167,9 +165,9 @@ export default function DashboardCharts({
         </div>
       </div>
 
-      {/* Area Chart: Revenue Over Time (replacing Line Chart) */}
-      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-100 lg:col-span-2">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      {/* Area Chart: Revenue Over Time */}
+      <div className="bg-neutral-white p-4 sm:p-6 rounded-lg shadow-md border border-neutral-border lg:col-span-2">
+        <h2 className="text-xl font-semibold text-neutral-heading mb-4">
           Revenue Over Time
         </h2>
         <div className="h-72 md:h-96">
@@ -184,8 +182,9 @@ export default function DashboardCharts({
                   <stop offset="95%" stopColor="#4F46E5" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="colorDebit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#DC2626" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#DC2626" stopOpacity={0.1} />
+                  <stop offset="5%" stopColor="#15803D" stopOpacity={0.8} />{" "}
+                  {/* Changed to accent-green */}
+                  <stop offset="95%" stopColor="#15803D" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -222,7 +221,7 @@ export default function DashboardCharts({
               <Area
                 type="monotone"
                 dataKey="Debit"
-                stroke="#DC2626"
+                stroke="#15803D" // Changed to accent-green
                 fillOpacity={1}
                 fill="url(#colorDebit)"
                 activeDot={{ r: 6 }}

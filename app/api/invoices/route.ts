@@ -13,7 +13,7 @@ type inputBody = {
   grandTotal: number;
   vehicalNumber: string;
   invoiceType: string;
-  invoiceNumber: string | null;
+  referenceInvoiceNumber: string;
 };
 
 export async function POST(request: Request) {
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as inputBody;
   const {
-    invoiceNumber,
+    referenceInvoiceNumber,
     customerId,
     organizationId,
     items,
@@ -36,7 +36,6 @@ export async function POST(request: Request) {
     vehicalNumber,
     invoiceType,
   } = body;
-  console.log("body:", body);
 
   try {
     const organization = await prisma.organization.findUnique({
@@ -50,8 +49,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const invNumber = `${invoiceNumber ?? organization.invoiceCount + 1}`;
-    console.log(invNumber, invoiceNumber);
+    const invNumber = `${referenceInvoiceNumber ?? organization.invoiceCount + 1}`;
     const invoice = await prisma.invoice.create({
       data: {
         userId: data.user.id,
@@ -66,20 +64,8 @@ export async function POST(request: Request) {
         status: "PENDING",
         invoiceType,
       },
-      include: { customer: true, organization: true },
     });
-    // const templatePath = path.join(process.cwd(), "public/templates/template7.pdf");
 
-    // const customer = invoice.customer
-    // if (!customer) throw new Error("Cannot find Customer")
-    // let outputPath
-    // if (invoiceType === "DEBIT") {
-    //   outputPath = await CreatePdfFromTemplate({ ...body, invoiceNumber, customer, organization }, templatePath)
-    //   await prisma.organization.update({
-    //     where: { id: organizationId },
-    //     data: { invoiceCount: { increment: 1 } },
-    //   })
-    // }
     if (invoice.invoiceType == "DEBIT") {
       await prisma.organization.update({
         where: { id: organizationId },
@@ -88,7 +74,6 @@ export async function POST(request: Request) {
         },
       });
     }
-    console.log("invoice: ", invoice);
 
     return NextResponse.json(
       { message: "Invoice created successfully", invoice },
@@ -97,7 +82,7 @@ export async function POST(request: Request) {
       }
     );
   } catch (error) {
-    console.error("Error creating invoice:", error);
+    console.log("Error creating invoice:", error);
     return NextResponse.json(
       { error: "Failed to create invoice" },
       { status: 500 }

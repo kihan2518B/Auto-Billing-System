@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { login } from './actions'
-import { MessageBox } from '@/components/MessageBox'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { login } from "./actions";
+import { MessageBox } from "@/components/MessageBox";
 
 // Define message type
 interface Message {
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   text: string;
 }
 
 export default function Login() {
-  const [email, setEmail] = useState<string>('')
-  const [password, setPassword] = useState<string>('')
-  const [message, setMessage] = useState<Message | null>(null)
-  const router = useRouter()
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [message, setMessage] = useState<Message | null>(null);
+  const router = useRouter();
 
   // Define the expected response type from login function
   interface LoginResponse {
@@ -27,29 +27,27 @@ export default function Login() {
 
   const handleSubmit = async (formData: FormData) => {
     try {
-      const response = await login(formData) as LoginResponse
+      const response = (await login(formData)) as LoginResponse;
 
       if (response.success) {
         setMessage({
-          type: 'success',
-          text: 'Login successful! Redirecting to dashboard...'
-        })
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 1500)
+          type: "success",
+          text: "Login successful! Redirecting to dashboard...",
+        });
+        router.push("/dashboard");
       } else {
         setMessage({
-          type: 'error',
-          text: response.message
-        })
+          type: "error",
+          text: response.message,
+        });
       }
     } catch (error) {
       setMessage({
-        type: 'error',
-        text: 'An unexpected error occurred. Please try again.'
-      })
+        type: "error",
+        text: "An unexpected error occurred. Please try again.",
+      });
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -71,13 +69,13 @@ export default function Login() {
           />
         )}
 
-        <form
-          className="mt-8 space-y-6"
-          action={handleSubmit}
-        >
+        <form className="mt-8 space-y-6" action={handleSubmit}>
           <div className="space-y-5">
             <div>
-              <label htmlFor="email-address" className="block text-sm font-medium text-navy-700">
+              <label
+                htmlFor="email-address"
+                className="block text-sm font-medium text-navy-700"
+              >
                 Email address
               </label>
               <input
@@ -93,7 +91,10 @@ export default function Login() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-navy-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-navy-700"
+              >
                 Password
               </label>
               <input
@@ -121,12 +122,15 @@ export default function Login() {
 
           <div className="text-center text-sm">
             <span className="text-gray-600">Not registered yet? </span>
-            <Link href="/signup" className="font-medium text-navy-600 hover:text-navy-500">
+            <Link
+              href="/signup"
+              className="font-medium text-navy-600 hover:text-navy-500"
+            >
               Create an account
             </Link>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

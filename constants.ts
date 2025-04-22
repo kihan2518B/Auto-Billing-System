@@ -1,9 +1,35 @@
-import { Home, BookOpen, Calendar, UserCheck } from "lucide-react";
-// Define role-based menu items
+import {
+  LayoutDashboard,
+  FileText,
+  Building2,
+  Users,
+  BarChart3,
+} from "lucide-react";
+
 export const Menuitems = [
-    { title: "Dashboard", url: "/dashboard", icon: Home },
-    { title: "Bills", url: "/dashboard/bills", icon: BookOpen },
-    { title: "Organizations", url: "/dashboard/organization", icon: UserCheck },
-    { title: "Customers", url: "/dashboard/customers", icon: UserCheck },
-    { title: "Reports", url: "/dashboard/reports", icon: UserCheck },
-]
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Bills",
+    url: "/dashboard/bills",
+    icon: FileText,
+  },
+  {
+    title: "Organizations",
+    url: "/dashboard/organization",
+    icon: Building2,
+  },
+  {
+    title: "Customers",
+    url: "/dashboard/customers",
+    icon: Users,
+  },
+  {
+    title: "Reports",
+    url: "/dashboard/reports",
+    icon: BarChart3,
+  },
+];

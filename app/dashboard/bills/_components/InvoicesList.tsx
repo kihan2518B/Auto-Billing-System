@@ -1,197 +1,3 @@
-// "use client";
-
-// import { User } from "@supabase/supabase-js";
-// import { useQuery } from "@tanstack/react-query";
-// import axios from "axios";
-// import Link from "next/link";
-// import React from "react";
-// import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
-
-// async function GetInvoices() {
-//   const res = await axios.get("/api/invoices");
-//   return res.data.invoices;
-// }
-
-// export default function InvoicesList({ user }: { user: User }) {
-//   const { data: invoices, isLoading } = useQuery({
-//     queryKey: ["invoices"],
-//     queryFn: GetInvoices,
-//     enabled: !!user,
-//   });
-
-//   return (
-//     <div className="mt-8 max-w-5xl mx-auto px-4 sm:px-6">
-//       <h2 className="text-2xl font-semibold text-neutral-heading mb-4">
-//         Recent Invoices
-//       </h2>
-
-//       {/* Desktop: Table View */}
-//       <div className="hidden sm:block bg-neutral-white shadow rounded-lg overflow-hidden">
-//         <table className="w-full">
-//           <thead>
-//             <tr className="bg-neutral-light">
-//               <th className="px-4 py-3 text-left text-neutral-text text-sm font-medium">
-//                 Invoice Number
-//               </th>
-//               <th className="px-4 py-3 text-left text-neutral-text text-sm font-medium">
-//                 Customer
-//               </th>
-//               <th className="px-4 py-3 text-left text-neutral-text text-sm font-medium">
-//                 Organization
-//               </th>
-//               <th className="px-4 py-3 text-left text-neutral-text text-sm font-medium">
-//                 Type
-//               </th>
-//               <th className="px-4 py-3 text-left text-neutral-text text-sm font-medium">
-//                 Total Amount
-//               </th>
-//               <th className="px-4 py-3 text-left text-neutral-text text-sm font-medium">
-//                 Status
-//               </th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {isLoading && (
-//               <tr>
-//                 <td
-//                   colSpan={6}
-//                   className="px-4 py-4 text-center text-neutral-text"
-//                 >
-//                   Loading Invoices...
-//                 </td>
-//               </tr>
-//             )}
-//             {invoices?.map((invoice: any) => (
-//               <tr
-//                 key={invoice.id}
-//                 className="border-t border-neutral-border hover:bg-neutral-light/50"
-//               >
-//                 <td className="px-4 py-3 text-neutral-text">
-//                   {invoice.invoiceNumber}
-//                 </td>
-//                 <td className="px-4 py-3 text-neutral-text">
-//                   {invoice.customer?.name || "N/A"}
-//                 </td>
-//                 <td className="px-4 py-3">
-//                   <Link
-//                     href={`/dashboard/bills/${invoice.id}`}
-//                     className="text-primary hover:underline"
-//                   >
-//                     {invoice.organization.name}
-//                   </Link>
-//                 </td>
-//                 <td className="px-4 py-3">
-//                   <span
-//                     className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${
-//                       invoice.invoiceType === "Credit"
-//                         ? "bg-primary/10 text-primary"
-//                         : "bg-accent-red/10 text-accent-red"
-//                     }`}
-//                   >
-//                     {invoice.invoiceType === "Credit" ? (
-//                       <ArrowUpCircle className="w-4 h-4" />
-//                     ) : (
-//                       <ArrowDownCircle className="w-4 h-4" />
-//                     )}
-//                     {invoice.invoiceType}
-//                   </span>
-//                 </td>
-//                 <td className="px-4 py-3 text-neutral-text">
-//                   ₹{invoice.totalAmount.toFixed(2)}
-//                 </td>
-//                 <td className="px-4 py-3">
-//                   <span
-//                     className={`px-2 py-1 text-xs font-semibold rounded-full ${
-//                       invoice.status === "COMPLETED"
-//                         ? "bg-accent-green/10 text-accent-green"
-//                         : "bg-accent-orange/10 text-accent-orange"
-//                     }`}
-//                   >
-//                     {invoice.status}
-//                   </span>
-//                 </td>
-//               </tr>
-//             ))}
-//             {!isLoading && invoices?.length === 0 && (
-//               <tr>
-//                 <td
-//                   colSpan={6}
-//                   className="px-4 py-4 text-center text-neutral-text"
-//                 >
-//                   No invoices found.
-//                 </td>
-//               </tr>
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       {/* Mobile: Card View */}
-//       <div className="sm:hidden space-y-4">
-//         {isLoading && (
-//           <div className="text-center text-neutral-text">
-//             Loading Invoices...
-//           </div>
-//         )}
-//         {invoices?.map((invoice: any) => (
-//           <div
-//             key={invoice.id}
-//             className="bg-neutral-white shadow rounded-lg p-4 border border-neutral-border"
-//           >
-//             <div className="flex justify-between items-center mb-2">
-//               <Link
-//                 href={`/dashboard/bills/${invoice.id}`}
-//                 className="text-primary font-semibold hover:underline"
-//               >
-//                 #{invoice.invoiceNumber}
-//               </Link>
-//               <span
-//                 className={`px-2 py-1 text-xs font-semibold rounded-full ${
-//                   invoice.status === "COMPLETED"
-//                     ? "bg-accent-green/10 text-accent-green"
-//                     : "bg-accent-orange/10 text-accent-orange"
-//                 }`}
-//               >
-//                 {invoice.status}
-//               </span>
-//             </div>
-//             <div className="grid grid-cols-2 gap-2 text-sm text-neutral-text">
-//               <div>
-//                 <span className="font-medium">Customer:</span>
-//                 <p>{invoice.customer?.name || "N/A"}</p>
-//               </div>
-//               <div>
-//                 <span className="font-medium">Organization:</span>
-//                 <p>{invoice.organization.name}</p>
-//               </div>
-//               <div>
-//                 <span className="font-medium">Type:</span>
-//                 <p className="inline-flex items-center gap-1">
-//                   {invoice.invoiceType === "Credit" ? (
-//                     <ArrowUpCircle className="w-4 h-4 text-primary" />
-//                   ) : (
-//                     <ArrowDownCircle className="w-4 h-4 text-accent-red" />
-//                   )}
-//                   {invoice.invoiceType}
-//                 </p>
-//               </div>
-//               <div>
-//                 <span className="font-medium">Total:</span>
-//                 <p>₹{invoice.totalAmount.toFixed(2)}</p>
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//         {!isLoading && invoices?.length === 0 && (
-//           <div className="text-center text-neutral-text">
-//             No invoices found.
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
 "use client";
 
 import { User } from "@supabase/supabase-js";
@@ -206,6 +12,7 @@ import {
   Truck,
   Filter,
   X,
+  RefreshCw,
 } from "lucide-react";
 
 // Import shadcn components
@@ -234,7 +41,11 @@ async function GetInvoices() {
 }
 
 export default function InvoicesList({ user }: { user: User }) {
-  const { data: rawInvoices, isLoading } = useQuery({
+  const {
+    data: rawInvoices,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["invoices"],
     queryFn: GetInvoices,
     enabled: !!user,
@@ -356,7 +167,7 @@ export default function InvoicesList({ user }: { user: User }) {
     <div className="mt-8 max-w-5xl mx-auto px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-navy-800 mb-4 sm:mb-0">
-          Recent Invoices
+          Invoices
         </h2>
 
         {/* Filter badges for mobile - show when filters are active */}
@@ -574,32 +385,42 @@ export default function InvoicesList({ user }: { user: User }) {
                 className={`border-t border-neutral-border hover:bg-neutral-light/50 ${
                   invoice.invoiceType === "CREDIT"
                     ? "bg-blue-50/50"
-                    : "bg-red-50/50"
+                    : "bg-[#15803D]/10"
                 }`}
               >
                 <td className="px-4 py-3 font-medium text-navy-900">
-                  #{invoice.invoiceNumber}
+                  <Link href={`/dashboard/bills/${invoice.id}`}>
+                    #{invoice.invoiceNumber}
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-neutral-text flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-neutral-text/70" />
-                  {formatDate(invoice.createdAt)}
+                  <Link href={`/dashboard/bills/${invoice.id}`}>
+                    <Calendar className="w-3.5 h-3.5 text-neutral-text/70" />
+                    {formatDate(invoice.createdAt)}
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-neutral-text">
-                  {invoice.customer?.name || invoice.billerName || "N/A"}
+                  <Link href={`/dashboard/bills/${invoice.id}`}>
+                    {invoice.customer?.name || invoice.billerName || "N/A"}
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-neutral-text">
-                  {invoice.organization.name}
+                  <Link href={`/dashboard/bills/${invoice.id}`}>
+                    {invoice.organization.name}
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-neutral-text flex items-center gap-1">
-                  <Truck className="w-3.5 h-3.5 text-neutral-text/70" />
-                  {invoice.vehicalNumber}
+                  <Link href={`/dashboard/bills/${invoice.id}`}>
+                    <Truck className="w-3.5 h-3.5 text-neutral-text/70" />
+                    {invoice.vehicalNumber}
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full ${
                       invoice.invoiceType === "CREDIT"
                         ? "bg-primary/10 text-primary"
-                        : "bg-accent-red/10 text-accent-red"
+                        : "bg-[#15803D]/10 text-[#15803D]"
                     }`}
                   >
                     {invoice.invoiceType === "CREDIT" ? (
@@ -615,7 +436,7 @@ export default function InvoicesList({ user }: { user: User }) {
                     className={
                       invoice.invoiceType === "CREDIT"
                         ? "text-primary"
-                        : "text-accent-red"
+                        : "text-[#15803D]"
                     }
                   >
                     ₹
@@ -720,7 +541,7 @@ export default function InvoicesList({ user }: { user: User }) {
                   className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
                     invoice.invoiceType === "CREDIT"
                       ? "bg-primary/10 text-primary"
-                      : "bg-accent-red/10 text-accent-red"
+                      : "bg-[#15803D]/10 text-[#15803D]"
                   }`}
                 >
                   {invoice.invoiceType === "CREDIT" ? (
@@ -737,7 +558,7 @@ export default function InvoicesList({ user }: { user: User }) {
                   className={`font-semibold ${
                     invoice.invoiceType === "CREDIT"
                       ? "text-primary"
-                      : "text-accent-red"
+                      : "text-[#15803D]"
                   }`}
                 >
                   ₹

@@ -39,6 +39,7 @@ export default function InvoiceForm({ user }: { user: User }) {
     setIsSubmitting(true);
     if (vehicalNumber.length != 10) {
       toast.error("Vehical number should be in this format GJ00XX0000");
+      setIsSubmitting(false);
       return;
     }
     vehicalNumber.toUpperCase();
@@ -121,8 +122,8 @@ export default function InvoiceForm({ user }: { user: User }) {
   };
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-  const gstAmount = totalAmount * 0.18;
-  const grandTotal = totalAmount + gstAmount;
+  const gstAmount = (totalAmount * 0.18).toFixed(0);
+  const grandTotal = totalAmount + Number(gstAmount);
 
   return (
     <div className="w-full mx-auto p-3 sm:p-6">
@@ -365,7 +366,7 @@ export default function InvoiceForm({ user }: { user: User }) {
                           }
                           required
                           min="0"
-                          step="0.01"
+                          step="0.001"
                           className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
                         />
                       </div>
@@ -435,15 +436,15 @@ export default function InvoiceForm({ user }: { user: User }) {
         <div className="mt-6 bg-neutral-light p-4 rounded-lg">
           <div className="flex justify-between text-neutral-text mb-2">
             <span>Subtotal:</span>
-            <span>₹{totalAmount.toFixed(2)}</span>
+            <span>₹{totalAmount}</span>
           </div>
           <div className="flex justify-between text-neutral-text mb-2">
             <span>GST (18%):</span>
-            <span>₹{gstAmount.toFixed(2)}</span>
+            <span>₹{gstAmount}</span>
           </div>
           <div className="flex justify-between text-lg font-semibold text-neutral-heading pt-2 border-t border-neutral-border">
             <span>Grand Total:</span>
-            <span>₹{grandTotal.toFixed(2)}</span>
+            <span>₹{grandTotal}</span>
           </div>
         </div>
 

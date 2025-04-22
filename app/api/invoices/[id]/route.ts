@@ -76,20 +76,24 @@ export async function PATCH(req: Request, context: any) {
         );
       }
       // If payment amount is provided in the request
-      if (data.amount) {
-        if (data.amount === currentInvoice.grandTotal) {
-          data.status = "COMPLETED";
-        } else if (data.amount > currentInvoice.grandTotal) {
-          return NextResponse.json(
-            { message: "Payment amount cannot be greater than invoice amount" },
-            { status: 400 }
-          );
-        }
+      if (data.amount && data.amount > currentInvoice.grandTotal) {
+        return NextResponse.json(
+          { message: "Payment amount cannot be greater than invoice amount" },
+          { status: 400 }
+        );
       }
 
+      const payment = await prisma.paymentLog.create({
+        data: {
+          invoiceId: id,
+          amount: `${data.amount}`,
+          note: data.note,
+          paymentDate: data.paymentDate,
+        },
+      });
       // Continue with existing COMPLETED status logic
       if (data.status === "COMPLETED") {
-        const invoice = await prisma.invoice.update({
+        await prisma.invoice.update({
           where: {
             id: id,
           },
@@ -97,21 +101,13 @@ export async function PATCH(req: Request, context: any) {
             status: "COMPLETED",
           },
         });
-        const payment = await prisma.paymentLog.create({
-          data: {
-            invoiceId: id,
-            amount: data.amount,
-            note: data.note,
-            paymentDate: data.paymentDate,
-          },
-        });
-        return NextResponse.json(
-          { message: "Invoice Updated Successfully", invoice, payment },
-          { status: 200 }
-        );
       }
+      return NextResponse.json(
+        { message: "Invoice Updated Successfully", payment },
+        { status: 200 }
+      );
     }
-
+    console.log("updating Invoice", data);
     //update invoice
     const invoice = await prisma.invoice.update({
       where: {
