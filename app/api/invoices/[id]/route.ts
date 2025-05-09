@@ -116,6 +116,11 @@ export async function PATCH(req: Request, context: any) {
       data: {
         ...data,
       },
+      include: {
+        customer: true,
+        organization: true,
+        payments: true,
+      },
     });
 
     return NextResponse.json(

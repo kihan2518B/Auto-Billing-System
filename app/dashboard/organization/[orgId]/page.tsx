@@ -467,18 +467,16 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                           {invoice.invoiceNumber}
                         </TableCell>
                         <TableCell>
-                          <div>{formatDate(invoice.createdAt)}</div>
+                          <div>{formatDate(invoice?.createdAt)}</div>
                           <div className="text-xs text-gray-500">
-                            {daysAgo(invoice.createdAt)} days ago
+                            {daysAgo(invoice?.createdAt)} days ago
                           </div>
                         </TableCell>
-                        <TableCell>{invoice?.customer.name}</TableCell>
+                        <TableCell>{invoice?.customer?.name}</TableCell>
                         <TableCell>{invoice.vehicalNumber ?? "-"}</TableCell>
                         <TableCell className="text-right">
                           ₹
-                          {invoice.grandTotal.toLocaleString("en-IN", {
-                            maximumFractionDigits: 2,
-                          })}
+                          {invoice.grandTotal.toLocaleString("en-IN")}
                         </TableCell>
                         <TableCell>
                           <Badge

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
-import { CreatePdfFromTemplate } from "@/app/_helpers/bills";
-import path from "path";
 
 type inputBody = {
   customerId: string;
@@ -49,7 +47,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const invNumber = `${referenceInvoiceNumber ?? organization.invoiceCount + 1}`;
+    const invNumber = `${
+      referenceInvoiceNumber ?? organization.invoiceCount + 1
+    }`;
     const invoice = await prisma.invoice.create({
       data: {
         userId: data.user.id,
@@ -100,6 +100,27 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const getorgandcustid = searchParams.get("getorgandcust");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
+    if (startDate && endDate) {
+      const invoices = await prisma.invoice.findMany({
+        where: {
+          userId: data.user?.id,
+          createdAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        include: { customer: true, organization: true },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!invoices) throw new Error("Error while getting invoices");
+      return NextResponse.json(
+        { message: "success", invoices },
+        { status: 200 }
+      );
+    }
 
     if (getorgandcustid) {
       const user = await prisma.user.findUnique({

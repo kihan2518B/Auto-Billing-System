@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "./actions";
 import { MessageBox } from "@/components/MessageBox";
+import toast from "react-hot-toast";
 
 // Define message type
 interface Message {
@@ -30,10 +31,7 @@ export default function Login() {
       const response = (await login(formData)) as LoginResponse;
 
       if (response.success) {
-        setMessage({
-          type: "success",
-          text: "Login successful! Redirecting to dashboard...",
-        });
+        toast.success("Login success full!!")
         router.push("/dashboard");
       } else {
         setMessage({

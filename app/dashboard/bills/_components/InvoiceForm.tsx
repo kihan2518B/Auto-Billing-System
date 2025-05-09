@@ -37,7 +37,7 @@ export default function InvoiceForm({ user }: { user: User }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    if (vehicalNumber.length != 10) {
+    if (vehicalNumber.length < 9) {
       toast.error("Vehical number should be in this format GJ00XX0000");
       setIsSubmitting(false);
       return;
@@ -366,7 +366,7 @@ export default function InvoiceForm({ user }: { user: User }) {
                           }
                           required
                           min="0"
-                          step="0.001"
+                          step="0.0001"
                           className="w-full p-2 rounded-md border border-neutral-border focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none text-sm"
                         />
                       </div>

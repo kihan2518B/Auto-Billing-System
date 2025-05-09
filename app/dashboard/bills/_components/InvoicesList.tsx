@@ -12,7 +12,6 @@ import {
   Truck,
   Filter,
   X,
-  RefreshCw,
 } from "lucide-react";
 
 // Import shadcn components
@@ -149,7 +148,7 @@ export default function InvoicesList({ user }: { user: User }) {
   };
 
   // Format date
-  const formatDate = (dateString: string) => {
+const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       day: "numeric",

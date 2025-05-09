@@ -18,7 +18,6 @@ import {
   User as UserIcon,
   Building,
   Clock,
-  ArrowDown,
   AlertCircle,
   DollarSign,
   X,
@@ -115,9 +114,10 @@ export default function InvoiceDetails({ user }: { user: User }) {
 
   // State for edit form
   const [editForm, setEditForm] = useState({
-    billerName: "",
     vehicalNumber: "",
     invoiceType: "",
+    invoiceNumber: "",
+    createdAt: "",
   });
 
   // State for payment form
@@ -159,8 +159,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
     onError: (error) => {
       if (axios.isAxiosError(error) && error.response) {
         setErrorMessage(error.response.data.message);
-        console.log("errorMessage: ", errorMessage);
-        toast.error(error.response.data.message || "something found wrong", {
+        toast.error(error.response.data.message || "Something went wrong", {
           style: {
             background: "#FFFFFF",
             color: "#DC2626",
@@ -262,11 +261,13 @@ export default function InvoiceDetails({ user }: { user: User }) {
   };
 
   const handleEditDialogOpen = () => {
+    console.log("invoice");
     if (!invoice) return;
     setEditForm({
-      billerName: invoice.billerName || "",
       vehicalNumber: invoice.vehicalNumber || "",
-      invoiceType: invoice.invoiceType || "",
+      invoiceType: invoice.invoiceType,
+      invoiceNumber: invoice.invoiceNumber || "",
+      createdAt: new Date(invoice.createdAt).toISOString().split("T")[0],
     });
     setEditDialogOpen(true);
   };
@@ -287,7 +288,10 @@ export default function InvoiceDetails({ user }: { user: User }) {
 
     updateMutation.mutate({
       id: invoice.id,
-      data: editForm,
+      data: {
+        ...editForm,
+        createdAt: new Date(editForm.createdAt).toISOString(),
+      },
     });
   };
 
@@ -301,7 +305,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
       note: paymentForm.note,
       paymentDate: new Date(paymentForm.paymentDate),
       status:
-        Number(remainingAmount) == Number(paymentForm.amount)
+        Number(remainingAmount) === Number(paymentForm.amount)
           ? "COMPLETED"
           : "PENDING",
     });
@@ -359,7 +363,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
         return "bg-slate-500 text-white";
     }
   };
-  
+  console.log(invoice);
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 bg-neutral-light min-h-screen">
       {errorMessage && (
@@ -386,7 +390,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
                 <h1 className="text-2xl font-bold">
                   Invoice #{invoice.invoiceNumber}
                 </h1>
-                <p className="text-white/80">
+                <p className="text-white font-semibold">
                   {new Date(invoice.createdAt).toLocaleDateString("en-US", {
                     day: "numeric",
                     month: "long",
@@ -416,6 +420,14 @@ export default function InvoiceDetails({ user }: { user: User }) {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
+              <Button
+                onClick={handleDownload}
+                size="sm"
+                className="bg-white text-navy-600 hover:bg-neutral-light transition-colors"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
             </div>
           </div>
         </div>
@@ -428,7 +440,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
               <div className="flex items-center mb-3">
                 <Building className="w-5 h-5 text-navy-600 mr-2" />
                 <h3 className="text-lg font-semibold text-neutral-heading">
-                  Organization
+                {invoice.invoiceType == "CREDIT" ? "Receiver" : "Organization"}
                 </h3>
               </div>
               <p className="text-neutral-heading font-medium text-lg">
@@ -445,7 +457,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
               <div className="flex items-center mb-3">
                 <UserIcon className="w-5 h-5 text-navy-600 mr-2" />
                 <h3 className="text-lg font-semibold text-neutral-heading">
-                  Customer
+                  {invoice.invoiceType == "CREDIT" ? "Biller" : "Customer"}
                 </h3>
               </div>
               <p className="text-neutral-heading font-medium text-lg">
@@ -482,18 +494,6 @@ export default function InvoiceDetails({ user }: { user: User }) {
               </div>
               <p className="text-neutral-heading font-medium">
                 {invoice.vehicalNumber || "N/A"}
-              </p>
-            </div>
-
-            <div className="bg-neutral-light rounded-lg p-4 border border-neutral-border">
-              <div className="flex items-center mb-2">
-                <UserIcon className="w-4 h-4 text-navy-600 mr-2" />
-                <h4 className="text-sm font-medium text-neutral-text">
-                  Biller Name
-                </h4>
-              </div>
-              <p className="text-neutral-heading font-medium">
-                {invoice.billerName || "N/A"}
               </p>
             </div>
           </div>
@@ -668,17 +668,6 @@ export default function InvoiceDetails({ user }: { user: User }) {
               </div>
             )}
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-end mt-8">
-            <Button
-              onClick={handleDownload}
-              className="bg-navy-600 hover:bg-navy-700 text-white font-medium px-6 py-2.5 shadow-md hover:shadow-lg transition-all focus:ring-2 focus:ring-navy-500"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Invoice
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -693,6 +682,41 @@ export default function InvoiceDetails({ user }: { user: User }) {
           </DialogHeader>
           <form onSubmit={handleEditSubmit}>
             <div className="grid gap-5 py-4">
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="invoiceNumber"
+                  className="text-neutral-heading font-medium"
+                >
+                  Invoice Number
+                </Label>
+                <Input
+                  id="invoiceNumber"
+                  value={editForm.invoiceNumber}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, invoiceNumber: e.target.value })
+                  }
+                  className="border-neutral-border focus:border-navy-600 focus:ring-1 focus:ring-navy-600"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="createdAt"
+                  className="text-neutral-heading font-medium"
+                >
+                  Invoice Date
+                </Label>
+                <Input
+                  id="createdAt"
+                  type="date"
+                  value={editForm.createdAt}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, createdAt: e.target.value })
+                  }
+                  className="border-neutral-border focus:border-navy-600 focus:ring-1 focus:ring-navy-600"
+                  required
+                />
+              </div>
               <div className="grid gap-2">
                 <Label
                   htmlFor="vehicalNumber"
@@ -724,8 +748,8 @@ export default function InvoiceDetails({ user }: { user: User }) {
                     setEditForm({ ...editForm, invoiceType: e.target.value })
                   }
                 >
-                  <option value="Credit">Credit</option>
-                  <option value="Debit">Debit</option>
+                  <option value="CREDIT">Credit</option>
+                  <option value="DEBIT">Debit</option>
                 </select>
               </div>
             </div>

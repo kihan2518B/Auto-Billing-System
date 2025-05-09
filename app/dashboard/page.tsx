@@ -6,6 +6,13 @@ import {
   TrendingUp,
   TrendingDown,
   ClipboardList,
+  FileSpreadsheet,
+  Building2,
+  Users,
+  FileText,
+  Plus,
+  Truck,
+  Calendar,
 } from "lucide-react";
 import DashboardCharts from "@/components/DashboardCharts";
 
@@ -16,6 +23,15 @@ export default async function Dashboard() {
     orderBy: { createdAt: "desc" },
     include: { customer: true, organization: true },
   });
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   // Fetch pending invoices count
   const pendingInvoices = await prisma.invoice.count({
@@ -34,22 +50,22 @@ export default async function Dashboard() {
 
   // Fetch income (Debit - Credit)
   const debitTotal = await prisma.invoice.aggregate({
-    _sum: { totalAmount: true },
+    _sum: { grandTotal: true },
     where: { invoiceType: "DEBIT" },
   });
   const creditTotal = await prisma.invoice.aggregate({
-    _sum: { totalAmount: true },
+    _sum: { grandTotal: true },
     where: { invoiceType: "CREDIT" },
   });
   const income =
-    (debitTotal._sum.totalAmount || 0) - (creditTotal._sum.totalAmount || 0);
+    (debitTotal._sum.grandTotal || 0) - (creditTotal._sum.grandTotal || 0);
 
   // Fetch monthly revenue for charts
   const monthlyRevenue = await prisma.$queryRaw`
     SELECT
       DATE_TRUNC('month', "createdAt") AS month,
       "invoiceType",
-      SUM("totalAmount") AS total
+      SUM("grandTotal") AS total
     FROM "Invoice"
     WHERE "createdAt" > NOW() - INTERVAL '12 months'
     GROUP BY DATE_TRUNC('month', "createdAt"), "invoiceType"
@@ -86,25 +102,25 @@ export default async function Dashboard() {
   // Data for bar chart
   const barChartData = [
     { name: "Credit", count: pendingCreditInvoices, color: "#4F46E5" },
-    { name: "Debit", count: pendingDebitInvoices, color: "#DC2626" },
+    { name: "Debit", count: pendingDebitInvoices, color: "#15803D" },
   ];
 
   // Data for pie chart
   const pieChartData = [
     {
       name: "Credit",
-      value: creditTotal._sum.totalAmount || 0,
+      value: creditTotal._sum.grandTotal || 0,
       color: "#4F46E5",
     },
     {
       name: "Debit",
-      value: debitTotal._sum.totalAmount || 0,
+      value: debitTotal._sum.grandTotal || 0,
       color: "#15803D",
     },
   ];
 
   // Format currency
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
@@ -117,6 +133,40 @@ export default async function Dashboard() {
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
         Financial Dashboard
       </h1>
+
+      {/* Mobile Quick Links */}
+      <div className="sm:hidden mb-6">
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/dashboard/bills/create"
+            className="flex flex-col items-center bg-indigo-600 text-white rounded-xl p-4 shadow-sm hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-6 h-6 mb-2" />
+            <span className="text-sm font-medium">Create Invoice</span>
+          </Link>
+          <Link
+            href="/dashboard/organizations"
+            className="flex flex-col items-center bg-emerald-600 text-white rounded-xl p-4 shadow-sm hover:bg-emerald-700 transition-colors"
+          >
+            <Building2 className="w-6 h-6 mb-2" />
+            <span className="text-sm font-medium">Manage Organizations</span>
+          </Link>
+          <Link
+            href="/dashboard/customers"
+            className="flex flex-col items-center bg-amber-600 text-white rounded-xl p-4 shadow-sm hover:bg-amber-700 transition-colors"
+          >
+            <Users className="w-6 h-6 mb-2" />
+            <span className="text-sm font-medium">Manage Customers</span>
+          </Link>
+          <Link
+            href="/dashboard/reports"
+            className="flex flex-col items-center bg-blue-600 text-white rounded-xl p-4 shadow-sm hover:bg-blue-700 transition-colors"
+          >
+            <FileText className="w-6 h-6 mb-2" />
+            <span className="text-sm font-medium">Get Reports</span>
+          </Link>
+        </div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -132,7 +182,7 @@ export default async function Dashboard() {
           <p className="text-2xl sm:text-3xl font-bold text-gray-800">
             {pendingInvoices}
           </p>
-          <p className="text-xs text-gray-500 mt-1">Total pending approval</p>
+          <p className="text-xs text-gray-500 mt-1">Total pending Payments</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
@@ -147,7 +197,7 @@ export default async function Dashboard() {
           <p className="text-2xl sm:text-3xl font-bold text-gray-800">
             {pendingCreditInvoices}
           </p>
-          <p className="text-xs text-gray-500 mt-1">Receivables pending</p>
+          <p className="text-xs text-gray-500 mt-1">Payble pending</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
@@ -160,7 +210,7 @@ export default async function Dashboard() {
           <p className="text-2xl sm:text-3xl font-bold text-gray-800">
             {pendingDebitInvoices}
           </p>
-          <p className="text-xs text-gray-500 mt-1">Payables pending</p>
+          <p className="text-xs text-gray-500 mt-1">Receivables pending</p>
         </div>
 
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
@@ -214,20 +264,29 @@ export default async function Dashboard() {
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Invoice Number
+              <tr className="bg-neutral-light">
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
+                  Invoice #
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
+                  Date
+                </th>
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
                   Customer
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
+                  Organization
+                </th>
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
+                  Vehicle
+                </th>
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-navy-900 text-sm font-medium">
                   Status
                 </th>
               </tr>
@@ -236,48 +295,80 @@ export default async function Dashboard() {
               {recentInvoices.map((invoice) => (
                 <tr
                   key={invoice.id}
-                  className="hover:bg-gray-50 transition-colors"
+                  className={`border-t border-neutral-border hover:bg-neutral-light/50 ${
+                    invoice.invoiceType === "CREDIT"
+                      ? "bg-blue-50/50"
+                      : "bg-[#15803D]/10"
+                  }`}
                 >
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/dashboard/bills/${invoice.id}`}
-                      className="text-indigo-600 hover:text-indigo-900 font-medium"
-                    >
-                      {invoice.invoiceNumber}
+                  <td className="px-4 py-3 font-medium text-navy-900">
+                    <Link href={`/dashboard/bills/${invoice.id}`}>
+                      #{invoice.invoiceNumber}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
-                    {invoice.customer?.name || "N/A"}
+                  <td className="px-4 py-3 text-neutral-text flex items-center gap-1">
+                    <Link href={`/dashboard/bills/${invoice.id}`}>
+                      <Calendar className="w-3.5 h-3.5 text-neutral-text/70" />
+                      {formatDate(`${invoice.createdAt}`)}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-neutral-text">
+                    <Link href={`/dashboard/bills/${invoice.id}`}>
+                      {invoice.customer?.name || invoice.billerName || "N/A"}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-neutral-text">
+                    <Link href={`/dashboard/bills/${invoice.id}`}>
+                      {invoice.organization.name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-neutral-text flex items-center gap-1">
+                    <Link href={`/dashboard/bills/${invoice.id}`}>
+                      <Truck className="w-3.5 h-3.5 text-neutral-text/70" />
+                      {invoice.vehicalNumber}
+                    </Link>
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full ${
                         invoice.invoiceType === "CREDIT"
-                          ? "bg-indigo-100 text-indigo-800"
-                          : "bg-[#15803D]/20 text-[#15803D]"
+                          ? "bg-primary/10 text-primary"
+                          : "bg-[#15803D]/10 text-[#15803D]"
                       }`}
                     >
                       {invoice.invoiceType === "CREDIT" ? (
-                        <ArrowUpCircle className="w-3 h-3" />
+                        <ArrowUpCircle className="w-3.5 h-3.5" />
                       ) : (
-                        <ArrowDownCircle className="w-3 h-3" />
+                        <ArrowDownCircle className="w-3.5 h-3.5" />
                       )}
                       {invoice.invoiceType}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
-                    {formatCurrency(invoice.totalAmount)}
+                  <td className="px-4 py-3 font-medium">
+                    <span
+                      className={
+                        invoice.invoiceType === "CREDIT"
+                          ? "text-primary"
+                          : "text-[#15803D]"
+                      }
+                    >
+                      ₹
+                      {invoice.grandTotal?.toFixed(2) ||
+                        invoice.totalAmount.toFixed(2)}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
-                        invoice.status === "COMPLETED"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-amber-100 text-[#15803D]"
-                      }`}
-                    >
-                      {invoice.status}
-                    </span>
+                    <Link href={`/dashboard/bills/${invoice.id}`}>
+                      <span
+                        className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${
+                          invoice.status === "COMPLETED"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {invoice.status}
+                      </span>
+                    </Link>
                   </td>
                 </tr>
               ))}
