@@ -6,34 +6,35 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import prisma from '@/lib/prisma'
 
+// app/login/actions.ts
 export async function login(formData: FormData): Promise<{
     success: boolean;
     message: string;
     data?: any;
-}> {
-    const supabase = await createClient()
-
+  }> {
+    const supabase = await createClient();
+  
     const userData = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-    }
-
-    const { error, data } = await supabase.auth.signInWithPassword(userData)
-
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
+  
+    const { error, data } = await supabase.auth.signInWithPassword(userData);
+  
     if (error) {
-        return {
-            success: false,
-            message: error.message || 'Invalid email or password',
-        }
+      return {
+        success: false,
+        message: error.message || "Invalid email or password",
+      };
     }
-
-    revalidatePath('/', 'layout')
+  
     return {
-        success: true,
-        message: 'Login successful',
-        data,
-    }
-}
+      success: true,
+      message: "Login successful",
+      data,
+    };
+  }
+  
 
 export async function signup(formData: FormData): Promise<{
     success: boolean;
@@ -81,6 +82,8 @@ export async function signup(formData: FormData): Promise<{
 export async function signOut() {
     const supabase = await createClient()
     const { error } = await supabase.auth.signOut()
-    console.log("Signed out");
+    console.log("error : ", error)
+    revalidatePath('/', 'layout')
+    redirect('/')
 
 }

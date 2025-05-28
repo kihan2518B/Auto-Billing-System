@@ -17,6 +17,7 @@ export default function Login() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<Message | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
   // Define the expected response type from login function
@@ -27,12 +28,15 @@ export default function Login() {
   }
 
   const handleSubmit = async (formData: FormData) => {
+    setLoading(true);
     try {
       const response = (await login(formData)) as LoginResponse;
-
+      console.log("response: ", response);
       if (response.success) {
-        toast.success("Login success full!!")
-        router.push("/dashboard");
+        toast.success("Login successful!");
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 500); // delay 1s to show the toast before redirect
       } else {
         setMessage({
           type: "error",
@@ -40,13 +44,16 @@ export default function Login() {
         });
       }
     } catch (error) {
+      console.log("error: ", error);
       setMessage({
         type: "error",
         text: "An unexpected error occurred. Please try again.",
       });
+    } finally {
+      setLoading(false);
     }
   };
-
+  console.log('loading: ', loading);
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
@@ -67,7 +74,14 @@ export default function Login() {
           />
         )}
 
-        <form className="mt-8 space-y-6" action={handleSubmit}>
+        <form
+          className="mt-8 space-y-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            handleSubmit(formData);
+          }}
+        >
           <div className="space-y-5">
             <div>
               <label
@@ -112,9 +126,36 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-600 hover:bg-navy-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy-500 transition duration-150 ease-in-out"
+              disabled={loading}
+              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-600 hover:bg-navy-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy-500 transition duration-150 ease-in-out disabled:opacity-50"
             >
-              Sign in
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </div>
 

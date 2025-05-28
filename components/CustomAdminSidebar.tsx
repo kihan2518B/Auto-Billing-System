@@ -93,7 +93,7 @@ export default function CustomAdminSideBar() {
                     <DropdownMenuContent className="w-36 mt-2 p-2 bg-white border border-gray-200 rounded-lg shadow-md">
                         <DropdownMenuItem className="flex items-center gap-2 p-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
                             <LogOut className="w-4 h-4" />
-                            <Button onClick={()=>signOut}>SignOut</Button>
+                            <Button className='text-white' onClick={() => signOut()}>SignOut</Button>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
