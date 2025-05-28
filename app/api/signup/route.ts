@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ 
       success: true,
-      message: "Signup successful! Please check your email to verify.",
+      message: "Signup successful!",
       data: userData 
     }, { status: 201 })
   } catch (error) {

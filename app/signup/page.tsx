@@ -4,6 +4,8 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from 'next/navigation'
 import { MessageBox } from "@/components/MessageBox";
+import { signup } from "../login/actions";
+import toast from "react-hot-toast";
 
 // Custom Message Component
 interface Message {
@@ -17,34 +19,10 @@ export default function Signup() {
   const [message, setMessage] = useState<Message | null>(null)
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleSubmit = async (formData: FormData) => {
     try {
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        setMessage({
-          type: 'success',
-          text: result.message
-        })
-        setTimeout(() => {
-          router.push('/login')
-        }, 1500)
-      } else {
-        setMessage({
-          type: 'error',
-          text: result.message || 'Signup failed'
-        })
-      }
+      signup(formData)
+      toast.success('Signup successful!')
     } catch (error) {
       setMessage({
         type: 'error',
@@ -73,7 +51,11 @@ export default function Signup() {
           />
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          handleSubmit(formData);
+        }}>
           <div className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-navy-700">
