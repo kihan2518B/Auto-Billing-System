@@ -4,7 +4,6 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from 'next/navigation'
 import { MessageBox } from "@/components/MessageBox";
-import { signup } from "../login/actions";
 import toast from "react-hot-toast";
 
 // Custom Message Component
@@ -21,8 +20,18 @@ export default function Signup() {
 
   const handleSubmit = async (formData: FormData) => {
     try {
-      signup(formData)
-      toast.success('Signup successful!')
+      const response = await fetch("/api/signup", {
+        method: "POST",
+        body: formData,
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success(result.message || 'Signup successful!')
+        router.push("/login")
+      } else {
+        toast.error(result.message || 'Signup failed.')
+      }
     } catch (error) {
       setMessage({
         type: 'error',

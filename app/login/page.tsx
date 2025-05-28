@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { login } from "./actions";
 import { MessageBox } from "@/components/MessageBox";
 import toast from "react-hot-toast";
 
@@ -27,33 +26,30 @@ export default function Login() {
     data?: any;
   }
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+
     try {
-      const response = (await login(formData)) as LoginResponse;
-      console.log("response: ", response);
-      if (response.success) {
-        toast.success("Login successful!");
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 500); // delay 1s to show the toast before redirect
-      } else {
-        setMessage({
-          type: "error",
-          text: response.message,
-        });
-      }
-    } catch (error) {
-      console.log("error: ", error);
-      setMessage({
-        type: "error",
-        text: "An unexpected error occurred. Please try again.",
+      const res = await fetch("/api/login", {
+        method: "POST",
+        body: formData,
       });
+      const result = await res.json();
+      if (result.success) {
+        toast.success("Login successful!");
+        router.push("/dashboard");
+      } else {
+        toast.error(result.message || "Login failed");
+      }
+    } catch (err) {
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
-  console.log('loading: ', loading);
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
@@ -76,11 +72,7 @@ export default function Login() {
 
         <form
           className="mt-8 space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            handleSubmit(formData);
-          }}
+          onSubmit={handleSubmit}
         >
           <div className="space-y-5">
             <div>

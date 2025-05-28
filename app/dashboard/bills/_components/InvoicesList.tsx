@@ -1,10 +1,8 @@
 "use client";
 
 import { User } from "@supabase/supabase-js";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   ArrowUpCircle,
   ArrowDownCircle,
@@ -12,6 +10,7 @@ import {
   Truck,
   Filter,
   X,
+  RefreshCw,
 } from "lucide-react";
 
 // Import shadcn components
@@ -34,37 +33,49 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-async function GetInvoices() {
-  const res = await axios.get("/api/invoices");
-  return res.data.invoices;
+interface InvoicesListProps {
+  invoices: any[];
+  setInvoices: React.Dispatch<React.SetStateAction<any[]>>;
+  filteredInvoices: any[];
+  setFilteredInvoices: React.Dispatch<React.SetStateAction<any[]>>;
+  organizationOptions: string[];
+  setOrganizationOptions: React.Dispatch<React.SetStateAction<string[]>>;
+  filters: {
+    organization: string;
+    invoiceType: string;
+    status: string;
+  };
+  setFilters: React.Dispatch<
+    React.SetStateAction<{
+      organization: string;
+      invoiceType: string;
+      status: string;
+    }>
+  >;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  itemsPerPage?: number; // Optional, default to 5
+  rawInvoices: any[];
+  refetch: () => void;
+  isLoading: boolean
 }
 
-export default function InvoicesList({ user }: { user: User }) {
-  const {
-    data: rawInvoices,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["invoices"],
-    queryFn: GetInvoices,
-    enabled: !!user,
-  });
-
-  // State management
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [filteredInvoices, setFilteredInvoices] = useState<any[]>([]);
-  const [organizationOptions, setOrganizationOptions] = useState<string[]>([]);
-
-  // Filter states
-  const [filters, setFilters] = useState({
-    organization: "",
-    invoiceType: "",
-    status: "",
-  });
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+export default function InvoicesList({
+  invoices,
+  setInvoices,
+  filteredInvoices,
+  setFilteredInvoices,
+  organizationOptions,
+  setOrganizationOptions,
+  filters,
+  setFilters,
+  currentPage,
+  setCurrentPage,
+  itemsPerPage = 5,
+  rawInvoices,
+  refetch,
+  isLoading
+}: InvoicesListProps) {
 
   // Initialize data and extract organization options
   useEffect(() => {
@@ -83,41 +94,33 @@ export default function InvoicesList({ user }: { user: User }) {
       );
       setOrganizationOptions(uniqueOrgs);
     }
-  }, [rawInvoices]);
+  }, [rawInvoices, setInvoices, setFilteredInvoices, setOrganizationOptions]);
 
   // Apply filters
   useEffect(() => {
     if (invoices.length) {
       let result = [...invoices];
 
-      if (filters.organization) {
-        if (filters.organization !== "all") {
-          result = result.filter(
-            (invoice) => invoice.organization.name === filters.organization
-          );
-        }
+      if (filters.organization && filters.organization !== "all") {
+        result = result.filter(
+          (invoice) => invoice.organization.name === filters.organization
+        );
       }
 
-      if (filters.invoiceType) {
-        if (filters.invoiceType !== "all") {
-          result = result.filter(
-            (invoice) => invoice.invoiceType === filters.invoiceType
-          );
-        }
+      if (filters.invoiceType && filters.invoiceType !== "all") {
+        result = result.filter(
+          (invoice) => invoice.invoiceType === filters.invoiceType
+        );
       }
 
-      if (filters.status) {
-        if (filters.status !== "all") {
-          result = result.filter(
-            (invoice) => invoice.status === filters.status
-          );
-        }
+      if (filters.status && filters.status !== "all") {
+        result = result.filter((invoice) => invoice.status === filters.status);
       }
 
       setFilteredInvoices(result);
       setCurrentPage(1); // Reset to first page when filters change
     }
-  }, [filters, invoices]);
+  }, [filters, invoices, setFilteredInvoices, setCurrentPage]);
 
   // Pagination calculation
   const totalPages = filteredInvoices
@@ -125,9 +128,9 @@ export default function InvoicesList({ user }: { user: User }) {
     : 0;
   const currentInvoices = filteredInvoices
     ? filteredInvoices.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      )
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    )
     : [];
 
   // Reset a specific filter
@@ -148,7 +151,7 @@ export default function InvoicesList({ user }: { user: User }) {
   };
 
   // Format date
-const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       day: "numeric",
@@ -215,20 +218,32 @@ const formatDate = (dateString: string) => {
 
       {/* Filter panel */}
       <div className="bg-neutral-white shadow rounded-lg mb-6 p-4 border border-neutral-border">
-        <div className="flex items-center gap-2 mb-3">
-          <Filter className="h-4 w-4 text-navy-800" />
-          <h3 className="text-sm font-medium text-navy-800">Filter Invoices</h3>
-
-          {hasActiveFilters && (
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-navy-800" />
+            <h3 className="text-sm font-medium text-navy-800">Filter Invoices</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-xs text-neutral-text hover:text-accent-red"
+              >
+                Clear All
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearAllFilters}
-              className="ml-auto text-xs text-neutral-text hover:text-accent-red"
+              onClick={() => refetch()}
+              className="text-navy-800 hover:bg-neutral-light"
+              title="Refresh invoices"
             >
-              Clear All
+              <RefreshCw className="h-4 w-4" />
             </Button>
-          )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -336,6 +351,18 @@ const formatDate = (dateString: string) => {
 
       {/* Desktop: Table View */}
       <div className="hidden sm:block bg-neutral-white shadow rounded-lg overflow-hidden border border-neutral-border">
+        <div className="flex justify-between items-center bg-neutral-light px-4 py-3">
+          <h3 className="text-sm font-medium text-navy-900">Invoice List</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            className="text-navy-800 hover:bg-neutral-light"
+            title="Refresh invoices"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
         <table className="w-full">
           <thead>
             <tr className="bg-neutral-light">
@@ -381,11 +408,10 @@ const formatDate = (dateString: string) => {
             {currentInvoices?.map((invoice: any) => (
               <tr
                 key={invoice.id}
-                className={`border-t border-neutral-border hover:bg-neutral-light/50 ${
-                  invoice.invoiceType === "CREDIT"
-                    ? "bg-blue-50/50"
-                    : "bg-[#15803D]/10"
-                }`}
+                className={`border-t border-neutral-border hover:bg-neutral-light/50 ${invoice.invoiceType === "CREDIT"
+                  ? "bg-blue-50/50"
+                  : "bg-[#15803D]/10"
+                  }`}
               >
                 <td className="px-4 py-3 font-medium text-navy-900">
                   <Link href={`/dashboard/bills/${invoice.id}`}>
@@ -416,11 +442,10 @@ const formatDate = (dateString: string) => {
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full ${
-                      invoice.invoiceType === "CREDIT"
-                        ? "bg-primary/10 text-primary"
-                        : "bg-[#15803D]/10 text-[#15803D]"
-                    }`}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full ${invoice.invoiceType === "CREDIT"
+                      ? "bg-primary/10 text-primary"
+                      : "bg-[#15803D]/10 text-[#15803D]"
+                      }`}
                   >
                     {invoice.invoiceType === "CREDIT" ? (
                       <ArrowUpCircle className="w-3.5 h-3.5" />
@@ -446,11 +471,10 @@ const formatDate = (dateString: string) => {
                 <td className="px-4 py-3">
                   <Link href={`/dashboard/bills/${invoice.id}`}>
                     <span
-                      className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${
-                        invoice.status === "COMPLETED"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
+                      className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${invoice.status === "COMPLETED"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-amber-100 text-amber-800"
+                        }`}
                     >
                       {invoice.status}
                     </span>
@@ -485,11 +509,10 @@ const formatDate = (dateString: string) => {
         {currentInvoices?.map((invoice: any) => (
           <div
             key={invoice.id}
-            className={`rounded-lg p-4 border shadow ${
-              invoice.invoiceType === "CREDIT"
-                ? "bg-blue-50/30 border-blue-200"
-                : "bg-red-50/30 border-red-200"
-            }`}
+            className={`rounded-lg p-4 border shadow ${invoice.invoiceType === "CREDIT"
+              ? "bg-blue-50/30 border-blue-200"
+              : "bg-red-50/30 border-red-200"
+              }`}
           >
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
@@ -501,11 +524,10 @@ const formatDate = (dateString: string) => {
                 </span>
               </div>
               <span
-                className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  invoice.status === "COMPLETED"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
+                className={`px-2 py-1 text-xs font-medium rounded-full ${invoice.status === "COMPLETED"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-amber-100 text-amber-800"
+                  }`}
               >
                 {invoice.status}
               </span>
@@ -537,11 +559,10 @@ const formatDate = (dateString: string) => {
             <div className="flex justify-between items-center border-t border-neutral-border pt-3">
               <div className="flex items-center gap-1">
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                    invoice.invoiceType === "CREDIT"
-                      ? "bg-primary/10 text-primary"
-                      : "bg-[#15803D]/10 text-[#15803D]"
-                  }`}
+                  className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${invoice.invoiceType === "CREDIT"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-[#15803D]/10 text-[#15803D]"
+                    }`}
                 >
                   {invoice.invoiceType === "CREDIT" ? (
                     <ArrowUpCircle className="w-3.5 h-3.5" />
@@ -554,11 +575,10 @@ const formatDate = (dateString: string) => {
               <div className="text-right">
                 <span className="text-xs text-neutral-text">Total Amount</span>
                 <p
-                  className={`font-semibold ${
-                    invoice.invoiceType === "CREDIT"
-                      ? "text-primary"
-                      : "text-[#15803D]"
-                  }`}
+                  className={`font-semibold ${invoice.invoiceType === "CREDIT"
+                    ? "text-primary"
+                    : "text-[#15803D]"
+                    }`}
                 >
                   ₹
                   {invoice.grandTotal?.toFixed(2) ||

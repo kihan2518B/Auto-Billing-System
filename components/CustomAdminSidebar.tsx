@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { LogOut, Tally1 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from './ui/button';
-import { signOut } from '@/app/login/actions';
+import { useRouter } from 'next/navigation';
 
 export default function CustomAdminSideBar() {
     const { open } = useSidebar();
@@ -30,7 +30,15 @@ export default function CustomAdminSideBar() {
         // Don't render the sidebar on signin or signup pages
         return null;
     }
-
+    const router = useRouter()
+    const signOut = async () => {
+        const res = await fetch('/api/signout', {
+            method: 'POST',
+        })
+        if (res.redirected) {
+            router.push(res.url) // redirect to /login
+        }
+    }
     return (
         <Sidebar collapsible='icon' className="bg-[#f8f9fa] border-r border-gray-200">
             <SidebarHeader className="border-b border-gray-200">

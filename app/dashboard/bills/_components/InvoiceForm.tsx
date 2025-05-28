@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@supabase/supabase-js";
 import axios from "axios";
@@ -15,7 +14,7 @@ const fetchCustomers = async () => {
   return res.data;
 };
 
-export default function InvoiceForm({ user }: { user: User }) {
+export default function InvoiceForm({ user, refetch }: { user: User, refetch: () => void }) {
   const [customerId, setCustomerId] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const [vehicalNumber, setVehicalNumber] = useState("");
@@ -26,7 +25,6 @@ export default function InvoiceForm({ user }: { user: User }) {
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isItemsExpanded, setIsItemsExpanded] = useState(true);
-  const router = useRouter();
 
   const { data, isLoading } = useQuery({
     queryKey: ["customers and organizations"],
@@ -76,7 +74,7 @@ export default function InvoiceForm({ user }: { user: User }) {
         )}`
       );
 
-      router.refresh();
+      refetch()
       // Reset form
       setCustomerId("");
       setOrganizationId("");
@@ -140,22 +138,20 @@ export default function InvoiceForm({ user }: { user: User }) {
           <button
             type="button"
             onClick={() => setInvoiceType("DEBIT")}
-            className={`flex-1 py-3 px-4 text-center font-medium transition-all ${
-              invoiceType === "DEBIT"
+            className={`flex-1 py-3 px-4 text-center font-medium transition-all ${invoiceType === "DEBIT"
                 ? "bg-primary text-neutral-white"
                 : "bg-neutral-light text-neutral-text hover:bg-neutral-border"
-            }`}
+              }`}
           >
             Debit Invoice
           </button>
           <button
             type="button"
             onClick={() => setInvoiceType("CREDIT")}
-            className={`flex-1 py-3 px-4 text-center font-medium transition-all ${
-              invoiceType === "CREDIT"
+            className={`flex-1 py-3 px-4 text-center font-medium transition-all ${invoiceType === "CREDIT"
                 ? "bg-primary text-neutral-white"
                 : "bg-neutral-light text-neutral-text hover:bg-neutral-border"
-            }`}
+              }`}
           >
             Credit Invoice
           </button>
@@ -286,9 +282,8 @@ export default function InvoiceForm({ user }: { user: User }) {
               Invoice Items
             </span>
             <ChevronDown
-              className={`w-5 h-5 transition-transform ${
-                isItemsExpanded ? "rotate-180" : ""
-              }`}
+              className={`w-5 h-5 transition-transform ${isItemsExpanded ? "rotate-180" : ""
+                }`}
             />
           </button>
 

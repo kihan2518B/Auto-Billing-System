@@ -1,21 +1,14 @@
 import { redirect } from 'next/navigation'
-import InvoiceForm from './_components/InvoiceForm'
 import { createClient } from '@/utils/supabase/server'
-import InvoicesList from './_components/InvoicesList'
+import InvoicesComponent from './_components/InvoiceComponent'
 
 export default async function InvoicesPage() {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser()
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getUser()
 
-    if (!data.user) {
-        redirect('/login')
-    }
+  if (!data.user) {
+    redirect('/login')
+  }
 
-    return (
-        <div className="p-6 w-screen">
-            <h1 className="text-3xl font-bold mb-6">Invoices</h1>
-            <InvoicesList user={data.user} />
-            <InvoiceForm user={data.user} />
-        </div>
-    )
+  return <InvoicesComponent user={data.user} />
 }

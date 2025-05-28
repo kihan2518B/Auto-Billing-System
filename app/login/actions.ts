@@ -1,5 +1,3 @@
-'use server'
-
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
@@ -8,63 +6,38 @@ import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers';
 
 export async function login(formData: FormData): Promise<{
-    success: boolean;
-    message: string;
-    data?: any;
+    success: boolean
+    message: string
+    data?: any
 }> {
-    const supabase = await createClient();
+    const supabase = await createClient()
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
 
-    const userData = {
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-    };
-
-    const { error, data } = await supabase.auth.signInWithPassword(userData);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-        return {
-            success: false,
-            message: error.message || "Invalid email or password",
-        };
+        return { success: false, message: error.message }
     }
 
-    // Store session in cookies (persistently)
-    const cookieStore = cookies();
-
-    const user = data.user;
-    const accessToken = data.session?.access_token;
-    const refreshToken = data.session?.refresh_token;
-
-    // Store minimal user info in a cookie
-    cookieStore.set('user', JSON.stringify({
-        id: user?.id,
-        email: user?.email,
-        accessToken,
-        refreshToken,
-    }), {
-        path: '/',
+    // Set a cookie manually if needed
+    const cookieStore = cookies()
+    cookieStore.set('user', JSON.stringify({ id: data.user?.id, email }), {
         httpOnly: true,
-        sameSite: 'strict',
-        secure: true,
+        path: '/',
         maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    })
 
-    return {
-        success: true,
-        message: "Login successful",
-        data,
-    };
+    return { success: true, message: "Login successful", data }
 }
 
 export async function signup(formData: FormData) {
     const supabase = await createClient()
 
-    const userData = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-    }
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
 
-    const { error, data } = await supabase.auth.signUp(userData)
+    const { error, data } = await supabase.auth.signUp({ email, password })
 
     if (error) {
         return {
@@ -76,20 +49,23 @@ export async function signup(formData: FormData) {
     try {
         await prisma.user.create({
             data: {
-                email: userData.email,
+                email,
                 id: data.user?.id as string,
             },
         })
-        login(formData)
+
+        return {
+            success: true,
+            message: 'Signup successful',
+        }
     } catch (prismaError) {
         console.error("Prisma error:", prismaError)
         return {
             success: false,
-            message: 'Failed to create user record in database',
+            message: 'Failed to create user in database',
         }
     }
 }
-
 export async function signOut() {
     const supabase = await createClient();
     await supabase.auth.signOut();

@@ -1,3 +1,4 @@
+"use server"
 import { NextRequest, NextResponse } from 'next/server';
 import { parse } from 'cookie';
 
@@ -5,7 +6,7 @@ const PUBLIC_ROUTES = ['/', '/login', '/signup'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-console.log("pathname: ",pathname)
+  console.log("pathname: ", pathname)
   const isPublic = PUBLIC_ROUTES.includes(pathname);
 
   const cookieHeader = request.headers.get('cookie');
