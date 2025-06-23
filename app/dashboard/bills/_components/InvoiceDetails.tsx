@@ -21,6 +21,7 @@ import {
   AlertCircle,
   DollarSign,
   X,
+  Percent,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+
+const gstOptions = [
+  { label: "5%", value: 5 },
+  { label: "12%", value: 12 },
+  { label: "18%", value: 18 },
+  { label: "28%", value: 28 },
+];
 
 const fetchInvoices = async (id: string) => {
   const res = await axios.get(`/api/invoices/${id}`);
@@ -52,6 +60,7 @@ const downloadInvoice = async (invoice: any) => {
       invoiceDate: invoice.createdAt,
       vehicalNumber: invoice.vehicalNumber,
       gstAmount: invoice.gstAmount,
+      gstPercentage: invoice.gstPercentage,
       organization: invoice.organization,
     },
     {
@@ -118,6 +127,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
     invoiceType: "",
     invoiceNumber: "",
     createdAt: "",
+    gstPercentage: 18,
   });
 
   // State for payment form
@@ -268,6 +278,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
       invoiceType: invoice.invoiceType,
       invoiceNumber: invoice.invoiceNumber || "",
       createdAt: new Date(invoice.createdAt).toISOString().split("T")[0],
+      gstPercentage: invoice.gstPercentage || 18,
     });
     setEditDialogOpen(true);
   };
@@ -285,12 +296,15 @@ export default function InvoiceDetails({ user }: { user: User }) {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!invoice) return;
-
+    const gstAmount = invoice.totalAmount * (editForm.gstPercentage / 100);
     updateMutation.mutate({
       id: invoice.id,
       data: {
         ...editForm,
+        gstPercentage: editForm.gstPercentage,
         createdAt: new Date(editForm.createdAt).toISOString(),
+        gstAmount: Number(gstAmount.toFixed(0)),
+        grandTotal: Number((invoice.totalAmount + gstAmount).toFixed(0)),
       },
     });
   };
@@ -440,7 +454,9 @@ export default function InvoiceDetails({ user }: { user: User }) {
               <div className="flex items-center mb-3">
                 <Building className="w-5 h-5 text-navy-600 mr-2" />
                 <h3 className="text-lg font-semibold text-neutral-heading">
-                {invoice.invoiceType == "CREDIT" ? "Receiver" : "Organization"}
+                  {invoice.invoiceType == "CREDIT"
+                    ? "Receiver"
+                    : "Organization"}
                 </h3>
               </div>
               <p className="text-neutral-heading font-medium text-lg">
@@ -750,6 +766,31 @@ export default function InvoiceDetails({ user }: { user: User }) {
                 >
                   <option value="CREDIT">Credit</option>
                   <option value="DEBIT">Debit</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="gstPercentage"
+                  className="text-neutral-heading font-medium"
+                >
+                  GST Rate
+                </Label>
+                <select
+                  id="gstPercentage"
+                  className="flex h-10 w-full rounded-md border border-neutral-border bg-white px-3 py-2 text-neutral-heading ring-offset-white focus:border-navy-600 focus:outline-none focus:ring-1 focus:ring-navy-600"
+                  value={editForm.gstPercentage}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      gstPercentage: Number(e.target.value),
+                    })
+                  }
+                >
+                  {gstOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

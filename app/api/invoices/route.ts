@@ -10,6 +10,7 @@ type inputBody = {
   gstAmount: number;
   grandTotal: number;
   vehicalNumber: string;
+  gstPercentage: number;
   invoiceType: string;
   referenceInvoiceNumber: string;
 };
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     totalAmount,
     gstAmount,
     grandTotal,
+    gstPercentage,
     vehicalNumber,
     invoiceType,
   } = body;
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
         customerId,
         organizationId,
         items,
+        gstPercentage,
         totalAmount,
         grandTotal,
         gstAmount,

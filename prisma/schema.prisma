@@ -146,6 +146,7 @@ model Invoice {
   items          Json
   totalAmount    Float
   vehicalNumber  String
+  gstPercentage  Int @default(18)
   gstAmount      Float
   grandTotal     Float
   status         String       @default("PENDING")

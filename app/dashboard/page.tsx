@@ -138,7 +138,7 @@ export default async function Dashboard() {
       <div className="sm:hidden mb-6">
         <div className="grid grid-cols-2 gap-3">
           <Link
-            href="/dashboard/bills/create"
+            href="/dashboard/bills"
             className="flex flex-col items-center bg-indigo-600 text-white rounded-xl p-4 shadow-sm hover:bg-indigo-700 transition-colors"
           >
             <Plus className="w-6 h-6 mb-2" />

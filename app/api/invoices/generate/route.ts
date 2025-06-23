@@ -163,6 +163,7 @@ export async function POST(req: Request) {
     invoiceDate,
     vehicalNumber,
     gstAmount,
+    gstPercentage,
     organization,
   } = await req.json();
 
@@ -262,6 +263,8 @@ export async function POST(req: Request) {
   form.getTextField("TotalAmount")?.updateAppearances(boldFont);
   form.getTextField("VehicalNumber")?.setText(vehicalNumber);
   form.getTextField("VehicalNumber")?.updateAppearances(boldFont);
+  form.getTextField("gst1")?.setText(`${(gstPercentage / 2).toFixed(1)}`);
+  form.getTextField("gst2")?.setText(`${(gstPercentage / 2).toFixed(1)}`);
   form.getTextField("sgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
   form.getTextField("cgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
   form.getTextField("GrandTotal")?.setText(`${grandTotal}`);

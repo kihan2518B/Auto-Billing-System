@@ -118,7 +118,7 @@ export default function CustomerForm({ user }: CustomerFormProps) {
                 id="gst"
                 type="text"
                 value={gstNumber}
-                onChange={(e) => setGstNumber(e.target.value)}
+                onChange={(e) => setGstNumber((e.target.value).toUpperCase())}
                 placeholder="Enter GST number"
                 required
                 disabled={isSubmitting}
