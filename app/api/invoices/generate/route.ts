@@ -170,7 +170,7 @@ export async function POST(req: Request) {
   // Load the template PDF
   const templatePath = path.join(
     process.cwd(),
-    "public/templates/template7.pdf"
+    "public/templates/template8.pdf"
   );
   const pdfBytes = fs.readFileSync(templatePath);
   const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -263,8 +263,11 @@ export async function POST(req: Request) {
   form.getTextField("TotalAmount")?.updateAppearances(boldFont);
   form.getTextField("VehicalNumber")?.setText(vehicalNumber);
   form.getTextField("VehicalNumber")?.updateAppearances(boldFont);
-  form.getTextField("gst1")?.setText(`${(gstPercentage / 2).toFixed(1)}`);
-  form.getTextField("gst2")?.setText(`${(gstPercentage / 2).toFixed(1)}`);
+  const halfGst = gstPercentage / 2;
+  const displayHalfGstPercentage =
+    halfGst % 1 === 0 ? halfGst.toFixed(0) : halfGst.toString();
+  form.getTextField("gst1")?.setText(`${displayHalfGstPercentage}%`);
+  form.getTextField("gst2")?.setText(`${displayHalfGstPercentage}%`);
   form.getTextField("sgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
   form.getTextField("cgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
   form.getTextField("GrandTotal")?.setText(`${grandTotal}`);
