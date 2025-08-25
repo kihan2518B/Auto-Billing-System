@@ -115,6 +115,7 @@ model Organization {
   policy        String?
   userId        String
   invoiceCount  Int       @default(0)
+  fireWoodInvoiceCount Int @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   invoices      Invoice[]

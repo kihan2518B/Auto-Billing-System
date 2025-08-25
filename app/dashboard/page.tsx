@@ -76,7 +76,7 @@ export default async function Dashboard() {
   const monthlyData = new Map();
 
   // First properly format each date and initialize structure
-  for (const row of monthlyRevenue) {
+  for (let row of monthlyRevenue) {
     const date = new Date(row.month);
     const monthYear = date.toLocaleString("default", {
       month: "short",

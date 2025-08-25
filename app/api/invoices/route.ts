@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 type inputBody = {
   customerId: string;
   organizationId: string;
-  items: string;
+  items: item[];
   totalAmount: number;
   gstAmount: number;
   grandTotal: number;
@@ -13,6 +13,15 @@ type inputBody = {
   gstPercentage: number;
   invoiceType: string;
   referenceInvoiceNumber: string;
+};
+
+type item = {
+  name: string;
+  unit: string;
+  price: string;
+  amount: string;
+  hsncode: string;
+  quantity: string;
 };
 
 export async function POST(request: Request) {
@@ -48,10 +57,12 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
-
+    const isFireWood = items.some((item) => item.name === "FireWood");
     const invNumber = `${
-      referenceInvoiceNumber ?? organization.invoiceCount + 1
-    }`;
+      referenceInvoiceNumber ?? isFireWood
+        ? organization.fireWoodInvoiceCount + 1
+        : organization.invoiceCount + 1
+    } J`;
     const invoice = await prisma.invoice.create({
       data: {
         userId: data.user.id,
@@ -70,12 +81,21 @@ export async function POST(request: Request) {
     });
 
     if (invoice.invoiceType == "DEBIT") {
-      await prisma.organization.update({
-        where: { id: organizationId },
-        data: {
-          invoiceCount: organization.invoiceCount + 1,
-        },
-      });
+      if (isFireWood) {
+        await prisma.organization.update({
+          where: { id: organizationId },
+          data: {
+            fireWoodInvoiceCount: organization.fireWoodInvoiceCount + 1,
+          },
+        });
+      } else {
+        await prisma.organization.update({
+          where: { id: organizationId },
+          data: {
+            invoiceCount: organization.invoiceCount + 1,
+          },
+        });
+      }
     }
 
     return NextResponse.json(
@@ -103,22 +123,39 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const getorgandcustid = searchParams.get("getorgandcust");
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    const startDateStr = searchParams.get("startDate");
+    const endDateStr = searchParams.get("endDate");
 
-    if (startDate && endDate) {
+    if (startDateStr && endDateStr) {
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      // Ensure endDate covers the entire day
+      endDate.setHours(23, 59, 59, 999);
+
+      console.log("Fetching invoices between dates:", startDate, endDate);
+
       const invoices = await prisma.invoice.findMany({
         where: {
           userId: data.user?.id,
-          createdAt: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
-          },
+          // createdAt: {
+          //   gte: startDate,
+          //   lte: endDate,
+          // },
         },
-        include: { customer: true, organization: true },
-        orderBy: { createdAt: "desc" },
+        include: {
+          customer: true,
+          organization: true,
+          payments: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
       });
+
+      console.log("Invoices fetched:", invoices);
       if (!invoices) throw new Error("Error while getting invoices");
+
       return NextResponse.json(
         { message: "success", invoices },
         { status: 200 }

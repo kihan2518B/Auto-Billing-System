@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 const gstOptions = [
+  { label: "0%", value: 0 },
   { label: "5%", value: 5 },
   { label: "12%", value: 12 },
   { label: "18%", value: 18 },
@@ -278,7 +279,7 @@ export default function InvoiceDetails({ user }: { user: User }) {
       invoiceType: invoice.invoiceType,
       invoiceNumber: invoice.invoiceNumber || "",
       createdAt: new Date(invoice.createdAt).toISOString().split("T")[0],
-      gstPercentage: invoice.gstPercentage || 18,
+      gstPercentage: invoice.gstPercentage,
     });
     setEditDialogOpen(true);
   };
@@ -377,7 +378,6 @@ export default function InvoiceDetails({ user }: { user: User }) {
         return "bg-slate-500 text-white";
     }
   };
-  console.log(invoice);
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 bg-neutral-light min-h-screen">
       {errorMessage && (

@@ -498,6 +498,7 @@ const fetchCustomers = async () => {
 
 const gstOptions = [
   { label: "5%", value: 5 },
+  { label: "0%", value: 0 },
   { label: "12%", value: 12 },
   { label: "18%", value: 18 },
   { label: "28%", value: 28 },
@@ -507,14 +508,17 @@ const productData = {
   WoodenSize: { hsn: "4407", unit: "CBM" },
   Limdo: { hsn: "4407", unit: "CBM" },
   FireWood: { hsn: "4401", unit: "KG" },
+  WoodLogRound: { hsn: "4401", unit: "KG" },
   WoodenDust: { hsn: "4401", unit: "KG" },
 };
 const productsOptions = [
   { label: "Limdo", value: "Limdo" },
   { label: "Wooden Size", value: "WoodenSize" },
   { label: "Fire Wood", value: "FireWood" },
+  { label: "Wood Log Round", value: "WoodLogRound" },
   { label: "Wooden Dust", value: "WoodenDust" },
 ];
+
 
 export default function InvoiceForm({
   user,

@@ -10,7 +10,7 @@ export default async function Page() {
         redirect('/login')
     }
     return (
-        <div>
+        <div className='flex w-full h-full items-center justify-center'>
             <InvoiceReport user={data.user} />
         </div>
     )

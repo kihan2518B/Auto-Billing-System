@@ -166,11 +166,12 @@ export async function POST(req: Request) {
     gstPercentage,
     organization,
   } = await req.json();
-
+  const isFireWood = items.some((item: any) => item.name == "FireWood");
+  console.log("items: ", items, isFireWood);
   // Load the template PDF
   const templatePath = path.join(
     process.cwd(),
-    "public/templates/template8.pdf"
+    `public/templates/${isFireWood ? "templateJ" : "template8"}.pdf`
   );
   const pdfBytes = fs.readFileSync(templatePath);
   const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -229,7 +230,11 @@ export async function POST(req: Request) {
       `PARTY DETAILS: ${customer?.name || "N/A"},${customer?.address || "N/A"}`
     );
   form.getTextField("CustomerDetails")?.updateAppearances(boldFont);
-  form.getTextField("CustomerGstNumber")?.setText(customer?.gstNumber || "N/A");
+  if (customer.gstNumber.trim() !== "") {
+    form
+      .getTextField("CustomerGstNumber")
+      ?.setText(`${isFireWood ? "GST" : ""}${customer?.gstNumber || "N/A"}`);
+  }
   form.getTextField("CustomerGstNumber")?.updateAppearances(boldFont);
 
   form.getTextField("InvoiceNumber")?.setText(invoiceNumber);
@@ -263,13 +268,15 @@ export async function POST(req: Request) {
   form.getTextField("TotalAmount")?.updateAppearances(boldFont);
   form.getTextField("VehicalNumber")?.setText(vehicalNumber);
   form.getTextField("VehicalNumber")?.updateAppearances(boldFont);
-  const halfGst = gstPercentage / 2;
-  const displayHalfGstPercentage =
-    halfGst % 1 === 0 ? halfGst.toFixed(0) : halfGst.toString();
-  form.getTextField("gst1")?.setText(`${displayHalfGstPercentage}%`);
-  form.getTextField("gst2")?.setText(`${displayHalfGstPercentage}%`);
-  form.getTextField("sgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
-  form.getTextField("cgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
+  if (gstPercentage !== 0) {
+    const halfGst = gstPercentage / 2;
+    const displayHalfGstPercentage =
+      halfGst % 1 === 0 ? halfGst.toFixed(0) : halfGst.toString();
+    form.getTextField("gst1")?.setText(`${displayHalfGstPercentage}%`);
+    form.getTextField("gst2")?.setText(`${displayHalfGstPercentage}%`);
+    form.getTextField("sgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
+    form.getTextField("cgst")?.setText(`${(gstAmount / 2).toFixed(0)}`);
+  }
   form.getTextField("GrandTotal")?.setText(`${grandTotal}`);
   form.getTextField("GrandTotal")?.updateAppearances(boldFont);
   form.getTextField("TotalAmountInWords")?.setText(totalAmountInWords);
