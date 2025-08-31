@@ -59,10 +59,12 @@ export async function POST(request: Request) {
     }
     const isFireWood = items.some((item) => item.name === "FireWood");
     const invNumber = `${
-      referenceInvoiceNumber ?? isFireWood
-        ? organization.fireWoodInvoiceCount + 1
+      referenceInvoiceNumber
+        ? referenceInvoiceNumber
+        : isFireWood
+        ? `${organization.fireWoodInvoiceCount + 1} J`
         : organization.invoiceCount + 1
-    } J`;
+    }`;
     const invoice = await prisma.invoice.create({
       data: {
         userId: data.user.id,
